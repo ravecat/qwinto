@@ -12,18 +12,20 @@
 
 <style>
   .game {
-    display: grid;
-    min-height: 100vh;
-    align-items: safe center;
-    justify-items: center;
-    margin: 0;
-    padding: 0;
+    width: 100vw;
+    height: 100vh;
   }
 
   .game__board {
     display: block;
     width: 100%;
-    height: auto;
-    margin: 0;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  @supports (height: 100svh) {
+    .game {
+      height: 100svh;
+    }
   }
 </style>
