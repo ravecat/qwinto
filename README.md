@@ -1,0 +1,94 @@
+# qwinto
+
+`qwinto` is an independent Svelte/Vite implementation of the Qwinto game.
+
+The project treats repository assets as the source of truth for the board and rule
+surface. The current committed game asset is `assets/board.svg`, which is rendered as a
+full-viewport board by the app.
+
+## Prerequisites
+
+Required dependencies:
+
+- Node.js `>=24`
+
+Recommended:
+
+<details>
+<summary>Prepare Nix environment</summary>
+
+Official docs:
+
+- [Nix installation](https://nixos.org/download/)
+- [Nix flakes](https://nix.dev/concepts/flakes)
+
+</details>
+
+<br>
+
+- Enter the environment with `nix develop`.
+- The flake provides Node.js plus the repository command tooling.
+
+Manual setup:
+
+- Install and configure the required dependencies above manually.
+- Use pnpm and Just when running the project commands outside the Nix shell.
+
+## Quick Start
+
+```sh
+just serve
+```
+
+Open [http://localhost:5173](http://localhost:5173).
+
+The Vite server uses `VITE_PORT` or defaults to `5173`. The server is configured with
+`strictPort: true`, so choose another port explicitly if `5173` is already in use.
+
+## Features
+
+- Render the Qwinto board from the committed SVG asset.
+- Keep game-facing board and rule assets under `assets/`.
+- Run as a standalone local web game.
+
+## Stack
+
+| Area                    | Version source files         |
+| ----------------------- | ---------------------------- |
+| Development environment | [flake.nix](flake.nix)       |
+| Frontend dependencies   | [package.json](package.json) |
+
+## Configuration
+
+| Key         | Production required? | Purpose                                           |
+| ----------- | -------------------- | ------------------------------------------------- |
+| `VITE_PORT` | No                   | Vite development server port. Defaults to `5173`. |
+
+## Commands
+
+| Command           | Purpose                                          |
+| ----------------- | ------------------------------------------------ |
+| `just setup`      | Install project dependencies.                    |
+| `just start`      | Start the Vite development server.               |
+| `just serve`      | Install dependencies and start the Vite server.  |
+| `just build`      | Build the app for production.                    |
+| `just check`      | Run formatting checks, linting, and type checks. |
+| `just format`     | Format source files and SVG assets.              |
+| `just format-svg` | Format SVG assets only.                          |
+| `just lint`       | Run Biome linting.                               |
+| `just typecheck`  | Run Svelte and TypeScript checks.                |
+| `just preview`    | Preview the production build.                    |
+
+## Testing and Checks
+
+```sh
+just check
+just build
+```
+
+There are no gameplay tests yet. `just check` currently validates formatting, linting,
+Svelte, and TypeScript.
+
+## License
+
+No license has been declared yet.
