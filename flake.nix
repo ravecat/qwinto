@@ -18,7 +18,7 @@
           packages = [
             pkgs.git
             pkgs.just
-            pkgs.nodejs_latest
+            pkgs.nodejs_24
             pkgs.pnpm
           ];
         };

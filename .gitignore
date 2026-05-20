@@ -36,6 +36,8 @@ pnpm-debug.log*
 lerna-debug.log*
 
 # Environment
+/envs/*
+!/envs/.env.example
 .env
 .env.*
 !.env.example

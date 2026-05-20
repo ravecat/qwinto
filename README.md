@@ -21,12 +21,31 @@ Official docs:
 
 - [Nix installation](https://nixos.org/download/)
 - [Nix flakes](https://nix.dev/concepts/flakes)
+- [direnv installation](https://direnv.net/docs/installation.html)
+- [direnv shell hook](https://direnv.net/docs/hook.html)
+- [nix-direnv](https://github.com/nix-community/nix-direnv)
+
+Optional direnv and nix-direnv setup through Nix:
+
+```sh
+nix profile install nixpkgs#direnv nixpkgs#nix-direnv
+mkdir -p ~/.config/direnv
+printf 'source $HOME/.nix-profile/share/nix-direnv/direnvrc\n' >> ~/.config/direnv/direnvrc
+```
+
+Add the direnv hook for your shell, then restart the shell. For bash:
+
+```sh
+printf 'eval "$(direnv hook bash)"\n' >> ~/.bashrc
+```
+
+For other shells, use the [direnv hook docs](https://direnv.net/docs/hook.html).
 
 </details>
 
 <br>
 
-- Enter the environment with `nix develop`.
+- Enter the environment with `nix develop`, or run `direnv allow` once and let direnv load it automatically.
 - The flake provides Node.js plus the repository command tooling.
 
 Manual setup:
@@ -63,6 +82,9 @@ The Vite server uses `VITE_PORT` or defaults to `5173`. The server is configured
 | Key         | Production required? | Purpose                                           |
 | ----------- | -------------------- | ------------------------------------------------- |
 | `VITE_PORT` | No                   | Vite development server port. Defaults to `5173`. |
+
+Local development variables can be placed in `envs/.env`. Use `envs/.env.example` as
+the template.
 
 ## Commands
 
