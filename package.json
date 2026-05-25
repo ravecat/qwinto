@@ -4,6 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "packageManager": "pnpm@10.33.2",
+  "dependencies": {
+    "@rvct/d20sdk": "^1.0.0",
+    "@rvct/phoenix": "1.2.0",
+    "phoenix": "^1.8.7"
+  },
   "devDependencies": {
     "@biomejs/biome": "2.4.13",
     "@prettier/plugin-xml": "^3.4.2",

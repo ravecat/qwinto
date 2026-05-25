@@ -1,8 +1,22 @@
 <script lang="ts">
+  import { shell } from "@rvct/d20sdk";
   import board from "~assets/board.svg";
+
+  type RuntimeSession = {
+    value: unknown;
+  };
+
+  const runtime = shell<RuntimeSession>({
+    allowedOrigins: import.meta.env.VITE_D20_SHELL_ORIGIN
+      ? [import.meta.env.VITE_D20_SHELL_ORIGIN]
+      : undefined,
+  });
 </script>
 
-<main class="game">
+<main
+  class="game"
+  data-runtime-status={$runtime.status}
+>
   <img
     class="game__board"
     src={board}
