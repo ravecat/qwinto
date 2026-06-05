@@ -2,10 +2,6 @@
 
 `qwinto` is an independent Svelte/Vite implementation of the Qwinto game.
 
-The project treats repository assets as the source of truth for the board and rule
-surface. The current committed game asset is `assets/board.svg`, which is rendered as a
-full-viewport board by the app.
-
 ## Prerequisites
 
 Required dependencies:
@@ -63,12 +59,6 @@ Open [http://localhost:5173](http://localhost:5173).
 
 The Vite server uses `VITE_PORT` or defaults to `5173`. The server is configured with
 `strictPort: true`, so choose another port explicitly if `5173` is already in use.
-
-## Features
-
-- Render the Qwinto board from the committed SVG asset.
-- Keep game-facing board and rule assets under `assets/`.
-- Run as a standalone local web game.
 
 ## Stack
 
