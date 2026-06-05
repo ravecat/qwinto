@@ -1,0 +1,8 @@
+.direnv
+.git
+.pnpm-store
+.env
+.env.*
+dist
+node_modules
+envs/.env

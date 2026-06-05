@@ -1,0 +1,4 @@
+# Biome owns source formatting; Prettier is only used for SVG assets.
+*
+!assets/
+!assets/**/*.svg

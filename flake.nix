@@ -12,15 +12,23 @@
       system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+        tooling = [
+          pkgs.git
+          pkgs.just
+          pkgs.nodejs_24
+          pkgs.pnpm
+        ];
       in
       {
         devShells.default = pkgs.mkShell {
           packages = [
-            pkgs.git
-            pkgs.just
-            pkgs.nodejs_24
-            pkgs.pnpm
-          ];
+            pkgs.docker-client
+            pkgs.docker-compose
+          ] ++ tooling;
+        };
+
+        devShells.container = pkgs.mkShell {
+          packages = tooling;
         };
       }
     );

@@ -95,9 +95,7 @@ the template.
 | `just serve`      | Install dependencies and start the Vite server.  |
 | `just build`      | Build the app for production.                    |
 | `just check`      | Run formatting checks, linting, and type checks. |
-| `just format`     | Format source files and SVG assets.              |
-| `just format-svg` | Format SVG assets only.                          |
-| `just lint`       | Run Biome linting.                               |
+| `just format`     | Format source files.                             |
 | `just typecheck`  | Run Svelte and TypeScript checks.                |
 | `just preview`    | Preview the production build.                    |
 

@@ -1,41 +1,42 @@
-pnpm := "pnpm"
-svg_files := "assets/**/*.svg"
+runner := "pnpm"
 
 default:
     @just --list
 
 setup:
-    {{ pnpm }} install
+    {{ runner }} install
 
-start:
-    {{ pnpm }} exec vite
+[arg("host", long)]
+start host="127.0.0.1":
+    {{ runner }} exec vite --host "{{host}}"
 
-serve:
+[arg("host", long)]
+serve host="127.0.0.1":
     just setup
-    just start
+    just start --host "{{host}}"
+
+up:
+    docker compose up --build
+
+down:
+    docker compose down
 
 build:
-    {{ pnpm }} exec vite build
+    {{ runner }} exec vite build
 
-check: format-check lint typecheck
+check:
+    {{ runner }} exec biome ci .
+    {{ runner }} exec prettier --check .
+    {{ runner }} exec biome lint .
+    just typecheck
 
 format:
-    {{ pnpm }} exec biome check --write .
-    {{ pnpm }} exec prettier --write --no-error-on-unmatched-pattern "{{ svg_files }}"
-
-format-check:
-    {{ pnpm }} exec biome ci .
-    {{ pnpm }} exec prettier --check --no-error-on-unmatched-pattern "{{ svg_files }}"
-
-format-svg:
-    {{ pnpm }} exec prettier --write --no-error-on-unmatched-pattern "{{ svg_files }}"
-
-lint:
-    {{ pnpm }} exec biome lint .
+    {{ runner }} exec biome check --write .
+    {{ runner }} exec prettier --write .
 
 typecheck:
-    {{ pnpm }} exec svelte-check --tsconfig ./tsconfig.json
-    {{ pnpm }} exec tsc -p tsconfig.*.json --noEmit
+    {{ runner }} exec svelte-check --tsconfig ./tsconfig.json
+    {{ runner }} exec tsc -p tsconfig.*.json --noEmit
 
 preview:
-    {{ pnpm }} exec vite preview
+    {{ runner }} exec vite preview
