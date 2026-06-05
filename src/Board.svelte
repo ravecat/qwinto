@@ -1,10 +1,12 @@
-<?xml version="1.0" encoding="UTF-8" ?>
 <svg
+  class="board"
   xmlns="http://www.w3.org/2000/svg"
   width="659.967"
   height="370.908"
   viewBox="-29.782 0 659.967 370.908"
   font-family='ui-monospace, "SF Mono", "Cascadia Mono", "Consolas", monospace'
+  role="img"
+  aria-label="Qwinto game board"
 >
   <rect
     x="-29.782"
@@ -676,3 +678,11 @@
     stroke-width="1.600"
   />
 </svg>
+
+<style>
+  .board {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+</style>
