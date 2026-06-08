@@ -4,6 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "packageManager": "pnpm@10.33.2",
+  "scripts": {
+    "test": "vitest run --project browser --passWithNoTests --reporter=verbose",
+    "test:browser": "vitest run --project browser --passWithNoTests --reporter=verbose",
+    "test:watch": "vitest --project browser --passWithNoTests --watch"
+  },
   "dependencies": {
     "@rvct/d20sdk": "1.1.0-beta.5",
     "@rvct/phoenix": "1.2.0",
@@ -15,10 +20,14 @@
     "@sveltejs/vite-plugin-svelte": "^7.0.0",
     "@tsconfig/svelte": "^5.0.8",
     "@types/node": "^25.6.0",
+    "@vitest/browser-playwright": "4.1.8",
+    "playwright": "1.58.2",
     "prettier": "^3.8.3",
     "svelte": "^5.56.3",
     "svelte-check": "^4.6.0",
     "typescript": "^6.0.3",
-    "vite": "^8.0.10"
+    "vite": "^8.0.10",
+    "vitest": "4.1.8",
+    "vitest-browser-svelte": "2.1.1"
   }
 }

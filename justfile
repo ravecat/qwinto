@@ -24,19 +24,22 @@ down:
 build:
     {{ runner }} exec vite build
 
+test:
+    {{ runner }} exec vitest run --project browser --passWithNoTests --reporter=verbose
+
 check:
     {{ runner }} exec biome ci .
-    {{ runner }} exec prettier --check .
+    {{ runner }} exec prettier --check "assets/**/*.svg"
     {{ runner }} exec biome lint .
     just typecheck
 
 format:
     {{ runner }} exec biome check --write .
-    {{ runner }} exec prettier --write .
+    {{ runner }} exec prettier --write "assets/**/*.svg"
 
 typecheck:
     {{ runner }} exec svelte-check --tsconfig ./tsconfig.json
-    {{ runner }} exec tsc -p tsconfig.*.json --noEmit
+    {{ runner }} exec tsc -p tsconfig.test.json --noEmit
 
 preview:
     {{ runner }} exec vite preview
