@@ -5,7 +5,7 @@
   "type": "module",
   "packageManager": "pnpm@10.33.2",
   "dependencies": {
-    "@rvct/d20sdk": "1.1.0-beta.4",
+    "@rvct/d20sdk": "1.1.0-beta.5",
     "@rvct/phoenix": "1.2.0",
     "phoenix": "^1.8.7"
   },
@@ -16,8 +16,8 @@
     "@tsconfig/svelte": "^5.0.8",
     "@types/node": "^25.6.0",
     "prettier": "^3.8.3",
-    "svelte": "^5.55.5",
-    "svelte-check": "^4.4.7",
+    "svelte": "^5.56.3",
+    "svelte-check": "^4.6.0",
     "typescript": "^6.0.3",
     "vite": "^8.0.10"
   }

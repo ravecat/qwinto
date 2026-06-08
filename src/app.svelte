@@ -1,12 +1,39 @@
 <script lang="ts">
   import Board from "./board.svelte";
-  import { session } from "./session";
+  import { type DieColor, session } from "./session";
+
+  const dice: DieColor[] = ["orange", "yellow", "purple"];
+
+  let selectedDice = $state<DieColor[]>([]);
+
+  const game = $derived($session.value?.game ?? null);
 
   const activeMemberId = $derived.by(() => {
-    const game = $session.value?.game;
-
     return game?.order[game.cursor] ?? null;
   });
+
+  const rollDisabled = $derived(
+    $session.status !== "ready" ||
+      game?.phase !== "turn" ||
+      selectedDice.length === 0 ||
+      $session.processing.roll,
+  );
+
+  function toggleDie(color: DieColor) {
+    selectedDice = selectedDice.includes(color)
+      ? selectedDice.filter((current) => current !== color)
+      : [...selectedDice, color];
+  }
+
+  function rolledValueForColor(color: DieColor) {
+    const index = game?.dices.indexOf(color) ?? -1;
+
+    return index >= 0 ? (game?.values[index] ?? null) : null;
+  }
+
+  function roll() {
+    session.roll({ colors: selectedDice });
+  }
 </script>
 
 <main class="game">
@@ -47,20 +74,47 @@
     <div class="side-panel side-panel--dice">
       <div
         class="dice-stack"
-        aria-hidden="true"
+        aria-label="Dice"
       >
-        <span class="die die--red"></span>
-        <span class="die die--yellow"></span>
-        <span class="die die--purple"></span>
+        {#each dice as color (color)}
+          <button
+            class="die die--{color}"
+            class:die--selected={selectedDice.includes(color)}
+            type="button"
+            aria-label="{color} die"
+            aria-pressed={selectedDice.includes(color)}
+            disabled={game?.phase !== "turn" || $session.processing.roll}
+            onclick={() => toggleDie(color)}
+          >
+            <span class="die-value">{rolledValueForColor(color) ?? ""}</span>
+          </button>
+        {/each}
       </div>
 
       <button
         class="roll-button"
         type="button"
-        aria-label="Roll dice"
+        aria-label="Roll selected dice"
+        disabled={rollDisabled}
+        onclick={roll}
       >
-        roll
+        {#if $session.processing.roll}
+          ...
+        {:else if game?.sum}
+          {game.sum}
+        {:else}
+          roll
+        {/if}
       </button>
+
+      {#if $session.errors.roll?.reason || $session.timeouts.roll}
+        <p
+          class="action-error"
+          aria-live="polite"
+        >
+          {$session.errors.roll?.reason ?? "timeout"}
+        </p>
+      {/if}
     </div>
   </div>
 </main>
@@ -173,13 +227,26 @@
 
   .die {
     display: grid;
+    position: relative;
+    place-items: center;
+    border: 0.12rem solid transparent;
     border-radius: 0.4rem;
+    color: #ffffff;
     box-shadow:
       inset 0 0.12rem 0.18rem rgb(255 255 255 / 0.24),
       inset 0 -0.12rem 0.24rem rgb(0 0 0 / 0.22);
+    cursor: pointer;
+    font: inherit;
+    font-size: clamp(1rem, 2.6vmin, 1.35rem);
+    font-weight: 800;
+    line-height: 1;
   }
 
-  .die--red {
+  .die:disabled {
+    cursor: default;
+  }
+
+  .die--orange {
     background: #be2121;
   }
 
@@ -189,6 +256,16 @@
 
   .die--purple {
     background: #5c437b;
+  }
+
+  .die--selected {
+    border-color: #ffffff;
+    outline: 0.16rem solid #2f6fed;
+    outline-offset: 0.1rem;
+  }
+
+  .die-value {
+    text-shadow: 0 0.08rem 0.1rem rgb(0 0 0 / 0.34);
   }
 
   .roll-button {
@@ -220,6 +297,17 @@
   .roll-button:focus-visible {
     outline: 0.16rem solid #2f6fed;
     outline-offset: 0.14rem;
+  }
+
+  .action-error {
+    max-width: 100%;
+    margin: 0;
+    color: #9a2a2a;
+    font-size: clamp(0.55rem, 1.35vmin, 0.68rem);
+    font-weight: 700;
+    line-height: 1.1;
+    text-align: center;
+    overflow-wrap: anywhere;
   }
 
   @media (max-width: 640px) {
