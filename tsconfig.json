@@ -14,9 +14,17 @@
     "lib": ["DOM", "DOM.Iterable", "ES2024"],
     "paths": {
       "~/*": ["./src/*"],
+      "~components/*": ["./src/components/*"],
+      "~store/*": ["./src/store/*"],
       "~assets/*": ["./assets/*"]
     },
-    "types": ["vite/client"]
+    "types": ["node", "vite/client", "vitest", "vitest/browser"]
   },
-  "include": ["src/**/*.ts", "src/**/*.js", "src/**/*.svelte"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.js",
+    "src/**/*.svelte",
+    "tests/**/*.ts",
+    "vite.config.ts"
+  ]
 }

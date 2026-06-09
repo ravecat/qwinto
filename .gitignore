@@ -27,6 +27,10 @@ storybook-static/
 .eslintcache
 *.tsbuildinfo
 
+# Test artifacts
+**/__screenshots__/
+.vitest-attachments/
+
 # Logs
 logs/
 *.log

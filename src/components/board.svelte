@@ -683,6 +683,6 @@
   .board {
     display: block;
     width: 100%;
-    height: 100%;
+    height: auto;
   }
 </style>

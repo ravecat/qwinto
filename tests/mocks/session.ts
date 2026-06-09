@@ -1,0 +1,41 @@
+import { atom } from "nanostores";
+import { vi } from "vitest";
+import type { session as runtimeSession } from "~store/session";
+
+type SessionState = Parameters<
+  Parameters<typeof runtimeSession.subscribe>[0]
+>[0];
+
+export function createSessionMock() {
+  const actions = {
+    roll: vi.fn(),
+    keep: vi.fn(),
+    reroll: vi.fn(),
+  };
+  const initialState = {
+    value: null,
+    status: "loading",
+    error: null,
+    processing: { roll: false, keep: false, reroll: false },
+    errors: { roll: {}, keep: {}, reroll: {} },
+    timeouts: { roll: false, keep: false, reroll: false },
+  } satisfies SessionState;
+  const state = atom<SessionState>(initialState);
+
+  return {
+    actions,
+    session: {
+      subscribe: state.subscribe,
+      roll: actions.roll,
+      keep: actions.keep,
+      reroll: actions.reroll,
+    },
+    set: state.set,
+    reset() {
+      state.set(initialState);
+      actions.roll.mockReset();
+      actions.keep.mockReset();
+      actions.reroll.mockReset();
+    },
+  };
+}

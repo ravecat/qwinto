@@ -71,4 +71,12 @@ export const session = runtime.session.extend(({ call }) => ({
   roll(payload: { colors: DieColor[] }) {
     return call<EmptyOk, ActionError>("roll", payload);
   },
+
+  keep() {
+    return call<EmptyOk, ActionError>("keep", {});
+  },
+
+  reroll() {
+    return call<EmptyOk, ActionError>("reroll", {});
+  },
 }));
