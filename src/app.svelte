@@ -20,23 +20,16 @@
   });
 
   const rollResultVisible = $derived(game?.phase === "decision" || game?.phase === "result");
-  const turnPending = $derived(game?.phase === "turn");
-  const decisionPending = $derived(game?.phase === "decision" && game.attempt === 1);
-  const canSelectDice = $derived(turnPending && $permissions.can_select_dice);
-  const canKeep = $derived(decisionPending && $permissions.can_keep);
-  const canReroll = $derived(decisionPending && $permissions.can_reroll);
   const channelReady = $derived($session.status === "ready");
 
   const diceSelectionDisabled = $derived(
-    !channelReady || !canSelectDice || $session.processing.roll,
+    !channelReady || !$permissions.can_select_dice || $session.processing.roll,
   );
 
   const decisionProcessing = $derived($session.processing.keep || $session.processing.reroll);
-  const decisionControlsVisible = $derived(
-    decisionPending && (canKeep || canReroll || decisionProcessing),
-  );
-  const keepDisabled = $derived(!channelReady || !canKeep || decisionProcessing);
-  const rerollDisabled = $derived(!channelReady || !canReroll || decisionProcessing);
+  const decisionControlsVisible = $derived($permissions.can_keep || $permissions.can_reroll);
+  const keepDisabled = $derived(!channelReady || !$permissions.can_keep || decisionProcessing);
+  const rerollDisabled = $derived(!channelReady || !$permissions.can_reroll || decisionProcessing);
 
   const rollDisabled = $derived(
     !channelReady ||

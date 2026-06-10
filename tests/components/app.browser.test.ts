@@ -87,7 +87,7 @@ describe("Game", () => {
       await expect.element(orangeDie).toHaveAttribute("aria-pressed", "false");
     });
 
-    test("disables dice selection outside turn even when permissions allow it", async () => {
+    test("disables dice selection outside turn when permissions deny it", async () => {
       sessionMock.set(
         sessionState
           .transient({
@@ -98,7 +98,6 @@ describe("Game", () => {
               sum: 3,
               attempt: 1,
             },
-            permissions: { can_select_dice: true, can_roll: true },
           })
           .build(),
       );
@@ -237,7 +236,7 @@ describe("Game", () => {
       expect(sessionMock.actions.reroll).toHaveBeenCalledTimes(1);
     });
 
-    test("hides confirmation controls outside first decision roll even when permissions allow them", async () => {
+    test("hides confirmation controls outside first decision roll when permissions deny them", async () => {
       sessionMock.set(
         sessionState
           .transient({
@@ -248,7 +247,6 @@ describe("Game", () => {
               sum: 4,
               attempt: 2,
             },
-            permissions: { can_keep: true, can_reroll: true },
           })
           .build(),
       );
