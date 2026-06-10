@@ -11,13 +11,7 @@
     return game?.order[game.cursor] ?? null;
   });
 
-  let selectedDice: DieColor[] = $derived.by(() => {
-    if (game?.phase === "decision" || game?.phase === "result") {
-      return game.dices;
-    }
-
-    return [];
-  });
+  let selectedDice: DieColor[] = $derived(game?.dices ?? []);
 
   const rollResultVisible = $derived(game?.phase === "decision" || game?.phase === "result");
   const channelReady = $derived($session.status === "ready");
