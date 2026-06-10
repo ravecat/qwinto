@@ -23,24 +23,24 @@
   const turnPending = $derived(game?.phase === "turn");
   const decisionPending = $derived(game?.phase === "decision" && game.attempt === 1);
   const canSelectDice = $derived(turnPending && $permissions.can_select_dice);
-  const canRoll = $derived(turnPending && $permissions.can_roll);
   const canKeep = $derived(decisionPending && $permissions.can_keep);
   const canReroll = $derived(decisionPending && $permissions.can_reroll);
+  const channelReady = $derived($session.status === "ready");
 
   const diceSelectionDisabled = $derived(
-    $session.status !== "ready" || !canSelectDice || $session.processing.roll,
+    !channelReady || !canSelectDice || $session.processing.roll,
   );
 
   const decisionProcessing = $derived($session.processing.keep || $session.processing.reroll);
   const decisionControlsVisible = $derived(
     decisionPending && (canKeep || canReroll || decisionProcessing),
   );
-  const keepDisabled = $derived($session.status !== "ready" || !canKeep || decisionProcessing);
-  const rerollDisabled = $derived($session.status !== "ready" || !canReroll || decisionProcessing);
+  const keepDisabled = $derived(!channelReady || !canKeep || decisionProcessing);
+  const rerollDisabled = $derived(!channelReady || !canReroll || decisionProcessing);
 
   const rollDisabled = $derived(
-    $session.status !== "ready" ||
-      !canRoll ||
+    !channelReady ||
+      !$permissions.can_roll ||
       selectedDice.length === 0 ||
       $session.processing.roll,
   );
@@ -54,8 +54,12 @@
     return index >= 0 ? (game?.values[index] ?? null) : null;
   }
 
+  function isDieSelected(color: DieColor) {
+    return selectedDice.includes(color);
+  }
+
   function toggleDie(color: DieColor) {
-    selectedDice = selectedDice.includes(color)
+    selectedDice = isDieSelected(color)
       ? selectedDice.filter((current) => current !== color)
       : [...selectedDice, color];
   }
@@ -118,13 +122,13 @@
           <button
             class="die die--{color}"
             class:die--selected={game?.phase === "turn" &&
-              selectedDice.includes(color)}
-            class:die--locked={rollResultVisible && selectedDice.includes(color)}
+              isDieSelected(color)}
+            class:die--locked={rollResultVisible && isDieSelected(color)}
             class:die--inactive={rollResultVisible &&
-              !selectedDice.includes(color)}
+              !isDieSelected(color)}
             type="button"
             aria-label="{color} die"
-            aria-pressed={selectedDice.includes(color)}
+            aria-pressed={isDieSelected(color)}
             disabled={diceSelectionDisabled}
             onclick={() => toggleDie(color)}
           >
