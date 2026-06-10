@@ -25,6 +25,17 @@ export type Score = {
   total: number;
 };
 
+export type Permissions = {
+  can_start_game: boolean;
+  can_select_dice: boolean;
+  can_roll: boolean;
+  can_keep: boolean;
+  can_reroll: boolean;
+  can_write_result: boolean;
+  can_pass_result: boolean;
+  can_take_penalty: boolean;
+};
+
 export type Game = {
   phase: GamePhase;
   order: string[];
@@ -43,6 +54,7 @@ export type Session = {
   owner_id: string;
   members: Record<string, Member>;
   game: Game;
+  permissions: Permissions;
 };
 
 type ActionError = {

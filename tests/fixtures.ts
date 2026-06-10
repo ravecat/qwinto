@@ -1,11 +1,19 @@
 import { Factory } from "fishery";
-import type { Game, Member, Player, session as runtimeSession, Session } from "~store/session";
+import type {
+  Game,
+  Member,
+  Permissions,
+  Player,
+  session as runtimeSession,
+  Session,
+} from "~store/session";
 
 type SessionState = Parameters<Parameters<typeof runtimeSession.subscribe>[0]>[0];
 
 type SessionOverrides = {
   game?: Partial<Game>;
-  session?: Partial<Omit<Session, "game">>;
+  permissions?: Partial<Permissions>;
+  session?: Partial<Omit<Session, "game" | "permissions">>;
 };
 
 export const members: Record<string, Member> = {
@@ -38,6 +46,17 @@ export const game = Factory.define<Game>(() => ({
   scores: {},
 }));
 
+export const permissions = Factory.define<Permissions>(() => ({
+  can_start_game: false,
+  can_select_dice: false,
+  can_roll: false,
+  can_keep: false,
+  can_reroll: false,
+  can_write_result: false,
+  can_pass_result: false,
+  can_take_penalty: false,
+}));
+
 export const session = Factory.define<Session, SessionOverrides>(({ transientParams }) => {
   const currentGame = game.build(transientParams.game);
 
@@ -48,6 +67,7 @@ export const session = Factory.define<Session, SessionOverrides>(({ transientPar
     members,
     ...transientParams.session,
     game: currentGame,
+    permissions: permissions.build(transientParams.permissions),
   };
 });
 

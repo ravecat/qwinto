@@ -38,7 +38,14 @@ describe("Game", () => {
     });
 
     test("lets the active player choose dice and roll", async () => {
-      sessionMock.set(sessionState.transient({ game: { phase: "turn" } }).build());
+      sessionMock.set(
+        sessionState
+          .transient({
+            game: { phase: "turn" },
+            permissions: { can_select_dice: true, can_roll: true },
+          })
+          .build(),
+      );
 
       const screen = await render(App);
       const orangeDie = screen.getByRole("button", { name: "orange die" });
@@ -66,8 +73,50 @@ describe("Game", () => {
       });
     });
 
+    test("disables dice selection and rolling when permissions deny turn actions", async () => {
+      sessionMock.set(sessionState.transient({ game: { phase: "turn" } }).build());
+
+      const screen = await render(App);
+      const orangeDie = screen.getByRole("button", { name: "orange die" });
+      const rollButton = screen.getByRole("button", {
+        name: "Roll selected dice",
+      });
+
+      await expect.element(orangeDie).toBeDisabled();
+      await expect.element(rollButton).toBeDisabled();
+      await expect.element(orangeDie).toHaveAttribute("aria-pressed", "false");
+    });
+
+    test("disables dice selection outside turn even when permissions allow it", async () => {
+      sessionMock.set(
+        sessionState
+          .transient({
+            game: {
+              phase: "decision",
+              dices: ["orange"],
+              values: [3],
+              sum: 3,
+              attempt: 1,
+            },
+            permissions: { can_select_dice: true, can_roll: true },
+          })
+          .build(),
+      );
+
+      const screen = await render(App);
+      const orangeDie = screen.getByRole("button", { name: "orange die" });
+
+      await expect.element(orangeDie).toBeDisabled();
+      await expect.element(orangeDie).toHaveAttribute("aria-pressed", "true");
+    });
+
     test("preserves local dice choice across turn processing updates", async () => {
-      const turnState = sessionState.transient({ game: { phase: "turn" } }).build();
+      const turnState = sessionState
+        .transient({
+          game: { phase: "turn" },
+          permissions: { can_select_dice: true, can_roll: true },
+        })
+        .build();
       sessionMock.set(turnState);
 
       const screen = await render(App);
@@ -87,7 +136,14 @@ describe("Game", () => {
     });
 
     test("uses server rolled dice after roll and starts the next turn empty", async () => {
-      sessionMock.set(sessionState.transient({ game: { phase: "turn", cursor: 0 } }).build());
+      sessionMock.set(
+        sessionState
+          .transient({
+            game: { phase: "turn", cursor: 0 },
+            permissions: { can_select_dice: true, can_roll: true },
+          })
+          .build(),
+      );
 
       const screen = await render(App);
       const orangeDie = screen.getByRole("button", { name: "orange die" });
@@ -145,6 +201,7 @@ describe("Game", () => {
               sum: 9,
               attempt: 1,
             },
+            permissions: { can_keep: true, can_reroll: true },
           })
           .build(),
       );
@@ -180,6 +237,33 @@ describe("Game", () => {
       expect(sessionMock.actions.reroll).toHaveBeenCalledTimes(1);
     });
 
+    test("hides confirmation controls outside first decision roll even when permissions allow them", async () => {
+      sessionMock.set(
+        sessionState
+          .transient({
+            game: {
+              phase: "decision",
+              dices: ["orange"],
+              values: [4],
+              sum: 4,
+              attempt: 2,
+            },
+            permissions: { can_keep: true, can_reroll: true },
+          })
+          .build(),
+      );
+
+      const screen = await render(App);
+
+      await expect.element(screen.getByLabelText("Rolled sum 4")).toBeVisible();
+      await expect
+        .element(screen.getByRole("button", { name: "Keep first roll result" }))
+        .not.toBeInTheDocument();
+      await expect
+        .element(screen.getByRole("button", { name: "Reroll same dice" }))
+        .not.toBeInTheDocument();
+    });
+
     test("disables both confirmation actions while one is processing", async () => {
       sessionMock.set(
         sessionState
@@ -191,6 +275,7 @@ describe("Game", () => {
               sum: 6,
               attempt: 1,
             },
+            permissions: { can_keep: true, can_reroll: true },
           })
           .build({
             processing: { roll: false, keep: true, reroll: false },
@@ -216,6 +301,7 @@ describe("Game", () => {
               sum: 3,
               attempt: 1,
             },
+            permissions: { can_keep: true, can_reroll: true },
           })
           .build({
             status: "stale",
@@ -234,6 +320,32 @@ describe("Game", () => {
         .toBeDisabled();
       await expect.element(screen.getByRole("button", { name: "Reroll same dice" })).toBeDisabled();
       await expect.element(screen.getByText("rejected")).toBeVisible();
+    });
+
+    test("hides confirmation controls when permissions deny decision actions", async () => {
+      sessionMock.set(
+        sessionState
+          .transient({
+            game: {
+              phase: "decision",
+              dices: ["purple"],
+              values: [2],
+              sum: 2,
+              attempt: 1,
+            },
+          })
+          .build(),
+      );
+
+      const screen = await render(App);
+
+      await expect.element(screen.getByLabelText("Rolled sum 2")).toBeVisible();
+      await expect
+        .element(screen.getByRole("button", { name: "Keep first roll result" }))
+        .not.toBeInTheDocument();
+      await expect
+        .element(screen.getByRole("button", { name: "Reroll same dice" }))
+        .not.toBeInTheDocument();
     });
 
     test("shows action error before later errors and timeouts", async () => {

@@ -1,5 +1,6 @@
 <script lang="ts">
   import Board from "~components/board.svelte";
+  import permissions from "~store/permissions";
   import { actionErrorMessage, type DieColor, session, timeoutErrorMessage } from "~store/session";
 
   const dice: DieColor[] = ["orange", "yellow", "purple"];
@@ -19,19 +20,27 @@
   });
 
   const rollResultVisible = $derived(game?.phase === "decision" || game?.phase === "result");
+  const turnPending = $derived(game?.phase === "turn");
+  const decisionPending = $derived(game?.phase === "decision" && game.attempt === 1);
+  const canSelectDice = $derived(turnPending && $permissions.can_select_dice);
+  const canRoll = $derived(turnPending && $permissions.can_roll);
+  const canKeep = $derived(decisionPending && $permissions.can_keep);
+  const canReroll = $derived(decisionPending && $permissions.can_reroll);
 
-  const decisionPending = $derived(game?.phase === "decision" && game?.attempt === 1);
-
-  const decisionDisabled = $derived(
-    $session.status !== "ready" ||
-      !decisionPending ||
-      $session.processing.keep ||
-      $session.processing.reroll,
+  const diceSelectionDisabled = $derived(
+    $session.status !== "ready" || !canSelectDice || $session.processing.roll,
   );
+
+  const decisionProcessing = $derived($session.processing.keep || $session.processing.reroll);
+  const decisionControlsVisible = $derived(
+    decisionPending && (canKeep || canReroll || decisionProcessing),
+  );
+  const keepDisabled = $derived($session.status !== "ready" || !canKeep || decisionProcessing);
+  const rerollDisabled = $derived($session.status !== "ready" || !canReroll || decisionProcessing);
 
   const rollDisabled = $derived(
     $session.status !== "ready" ||
-      game?.phase !== "turn" ||
+      !canRoll ||
       selectedDice.length === 0 ||
       $session.processing.roll,
   );
@@ -46,10 +55,6 @@
   }
 
   function toggleDie(color: DieColor) {
-    if (game?.phase !== "turn") {
-      return;
-    }
-
     selectedDice = selectedDice.includes(color)
       ? selectedDice.filter((current) => current !== color)
       : [...selectedDice, color];
@@ -120,7 +125,7 @@
             type="button"
             aria-label="{color} die"
             aria-pressed={selectedDice.includes(color)}
-            disabled={game?.phase !== "turn" || $session.processing.roll}
+            disabled={diceSelectionDisabled}
             onclick={() => toggleDie(color)}
           >
             <span class="die-value">{rolledValueForColor(color) ?? ""}</span>
@@ -147,7 +152,7 @@
         </div>
       {/if}
 
-      {#if decisionPending}
+      {#if decisionControlsVisible}
         <div
           class="decision-controls"
           aria-label="Roll decision"
@@ -156,7 +161,7 @@
             class="decision-button decision-button--keep"
             type="button"
             aria-label="Keep first roll result"
-            disabled={decisionDisabled}
+            disabled={keepDisabled}
             onclick={keep}
           >
             {#if $session.processing.keep}
@@ -170,7 +175,7 @@
             class="decision-button decision-button--reroll"
             type="button"
             aria-label="Reroll same dice"
-            disabled={decisionDisabled}
+            disabled={rerollDisabled}
             onclick={reroll}
           >
             {#if $session.processing.reroll}
