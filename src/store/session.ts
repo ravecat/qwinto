@@ -45,7 +45,7 @@ export type Session = {
   game: Game;
 };
 
-export type ActionError = {
+type ActionError = {
   reason?: string;
 };
 
@@ -80,3 +80,36 @@ export const session = runtime.session.extend(({ call }) => ({
     return call<EmptyOk, ActionError>("reroll", {});
   },
 }));
+
+type SessionSnapshot = Parameters<Parameters<typeof session.subscribe>[0]>[0];
+type ActionErrorBuckets = SessionSnapshot["errors"];
+type ActionTimeoutBuckets = SessionSnapshot["timeouts"];
+type ActionBucket = Extract<keyof ActionErrorBuckets & keyof ActionTimeoutBuckets, string>;
+
+export function actionErrorMessage(snapshot: SessionSnapshot): string | null {
+  for (const [bucket, error] of Object.entries(snapshot.errors) as [
+    ActionBucket,
+    ActionErrorBuckets[ActionBucket],
+  ][]) {
+    if (error === null) {
+      continue;
+    }
+
+    return error.reason?.trim() || `${bucket} error`;
+  }
+
+  return null;
+}
+
+export function timeoutErrorMessage(snapshot: SessionSnapshot): string | null {
+  for (const [bucket, timedOut] of Object.entries(snapshot.timeouts) as [
+    ActionBucket,
+    ActionTimeoutBuckets[ActionBucket],
+  ][]) {
+    if (timedOut) {
+      return `${bucket} timeout`;
+    }
+  }
+
+  return null;
+}

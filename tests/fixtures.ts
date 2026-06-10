@@ -1,15 +1,7 @@
 import { Factory } from "fishery";
-import type {
-  Game,
-  Member,
-  Player,
-  session as runtimeSession,
-  Session,
-} from "~store/session";
+import type { Game, Member, Player, session as runtimeSession, Session } from "~store/session";
 
-type SessionState = Parameters<
-  Parameters<typeof runtimeSession.subscribe>[0]
->[0];
+type SessionState = Parameters<Parameters<typeof runtimeSession.subscribe>[0]>[0];
 
 type SessionOverrides = {
   game?: Partial<Game>;
@@ -46,20 +38,18 @@ export const game = Factory.define<Game>(() => ({
   scores: {},
 }));
 
-export const session = Factory.define<Session, SessionOverrides>(
-  ({ transientParams }) => {
-    const currentGame = game.build(transientParams.game);
+export const session = Factory.define<Session, SessionOverrides>(({ transientParams }) => {
+  const currentGame = game.build(transientParams.game);
 
-    return {
-      id: "session-test",
-      phase: "in_progress",
-      owner_id: "alice",
-      members,
-      ...transientParams.session,
-      game: currentGame,
-    };
-  },
-);
+  return {
+    id: "session-test",
+    phase: "in_progress",
+    owner_id: "alice",
+    members,
+    ...transientParams.session,
+    game: currentGame,
+  };
+});
 
 export const sessionState = Factory.define<SessionState, SessionOverrides>(
   ({ transientParams }) => ({
@@ -67,7 +57,7 @@ export const sessionState = Factory.define<SessionState, SessionOverrides>(
     status: "ready",
     error: null,
     processing: { roll: false, keep: false, reroll: false },
-    errors: { roll: {}, keep: {}, reroll: {} },
+    errors: { roll: null, keep: null, reroll: null },
     timeouts: { roll: false, keep: false, reroll: false },
   }),
 );

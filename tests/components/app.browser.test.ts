@@ -220,8 +220,8 @@ describe("Game", () => {
           .build({
             status: "stale",
             errors: {
-              roll: {},
-              keep: {},
+              roll: null,
+              keep: null,
               reroll: { reason: "rejected" },
             },
           }),
@@ -234,6 +234,58 @@ describe("Game", () => {
         .toBeDisabled();
       await expect.element(screen.getByRole("button", { name: "Reroll same dice" })).toBeDisabled();
       await expect.element(screen.getByText("rejected")).toBeVisible();
+    });
+
+    test("shows action error before later errors and timeouts", async () => {
+      sessionMock.set(
+        sessionState
+          .transient({
+            game: {
+              phase: "decision",
+              dices: ["purple"],
+              values: [2],
+              sum: 2,
+              attempt: 1,
+            },
+          })
+          .build({
+            errors: {
+              roll: { reason: "" },
+              keep: { reason: "rejected" },
+              reroll: null,
+            },
+            timeouts: { roll: false, keep: true, reroll: false },
+          }),
+      );
+
+      const screen = await render(App);
+
+      await expect.element(screen.getByText("roll error")).toBeVisible();
+      await expect.element(screen.getByText("rejected")).not.toBeInTheDocument();
+      await expect.element(screen.getByText("timeout")).not.toBeInTheDocument();
+    });
+
+    test("shows timeout error when no action error is present", async () => {
+      sessionMock.set(
+        sessionState
+          .transient({
+            game: {
+              phase: "decision",
+              dices: ["yellow"],
+              values: [1],
+              sum: 1,
+              attempt: 1,
+            },
+          })
+          .build({
+            timeouts: { roll: false, keep: true, reroll: true },
+          }),
+      );
+
+      const screen = await render(App);
+
+      await expect.element(screen.getByText("keep timeout")).toBeVisible();
+      await expect.element(screen.getByText("reroll timeout")).not.toBeInTheDocument();
     });
   });
 

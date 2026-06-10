@@ -1,6 +1,6 @@
 <script lang="ts">
   import Board from "~components/board.svelte";
-  import { type DieColor, session } from "~store/session";
+  import { actionErrorMessage, type DieColor, session, timeoutErrorMessage } from "~store/session";
 
   const dice: DieColor[] = ["orange", "yellow", "purple"];
 
@@ -36,14 +36,8 @@
       $session.processing.roll,
   );
 
-  const actionError = $derived(
-    $session.errors.roll?.reason ??
-      $session.errors.keep?.reason ??
-      $session.errors.reroll?.reason ??
-      ($session.timeouts.roll || $session.timeouts.keep || $session.timeouts.reroll
-        ? "timeout"
-        : null),
-  );
+  const actionError = $derived(actionErrorMessage($session));
+  const timeoutError = $derived(timeoutErrorMessage($session));
 
   function rolledValueForColor(color: DieColor) {
     const index = game?.dices.indexOf(color) ?? -1;
@@ -194,6 +188,13 @@
           aria-live="polite"
         >
           {actionError}
+        </p>
+      {:else if timeoutError}
+        <p
+          class="action-error"
+          aria-live="polite"
+        >
+          {timeoutError}
         </p>
       {/if}
     </div>
