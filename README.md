@@ -78,16 +78,16 @@ the template.
 
 ## Commands
 
-| Command           | Purpose                                          |
-| ----------------- | ------------------------------------------------ |
-| `just setup`      | Install project dependencies.                    |
-| `just start`      | Start the Vite development server.               |
-| `just serve`      | Install dependencies and start the Vite server.  |
-| `just build`      | Build the app for production.                    |
-| `just check`      | Run formatting checks, linting, and type checks. |
-| `just format`     | Format source files.                             |
-| `just typecheck`  | Run Svelte and TypeScript checks.                |
-| `just preview`    | Preview the production build.                    |
+| Command          | Purpose                                          |
+| ---------------- | ------------------------------------------------ |
+| `just setup`     | Install project dependencies.                    |
+| `just start`     | Start the Vite development server.               |
+| `just serve`     | Install dependencies and start the Vite server.  |
+| `just build`     | Build the app for production.                    |
+| `just check`     | Run formatting checks, linting, and type checks. |
+| `just format`    | Format source files.                             |
+| `just typecheck` | Run Svelte and TypeScript checks.                |
+| `just preview`   | Preview the production build.                    |
 
 ## Testing and Checks
 

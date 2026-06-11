@@ -28,14 +28,13 @@ test:
     {{ runner }} exec vitest run --project browser --passWithNoTests --reporter=verbose
 
 check:
-    {{ runner }} exec biome ci .
-    {{ runner }} exec prettier --check "assets/**/*.svg"
-    {{ runner }} exec biome lint .
+    {{ runner }} exec oxfmt --check .
+    {{ runner }} exec eslint .
     just typecheck
 
 format:
-    {{ runner }} exec biome check --write .
-    {{ runner }} exec prettier --write "assets/**/*.svg"
+    {{ runner }} exec eslint . --fix
+    {{ runner }} exec oxfmt .
 
 typecheck:
     {{ runner }} exec svelte-check --tsconfig ./tsconfig.json

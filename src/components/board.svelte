@@ -4,7 +4,7 @@
   width="659.967"
   height="370.908"
   viewBox="-29.782 0 659.967 370.908"
-  font-family='ui-monospace, "SF Mono", "Cascadia Mono", "Consolas", monospace'
+  font-family="ui-monospace, SF Mono, Cascadia Mono, Consolas, monospace"
   role="img"
   aria-label="Qwinto game board"
 >
@@ -163,11 +163,7 @@
       stroke="#858585"
       stroke-width="1.600"
     />
-    <use
-      href="#flag-icon"
-      transform="translate(249.214 -187.805)"
-      fill="#c2c2c2"
-    />
+    <use href="#flag-icon" transform="translate(249.214 -187.805)" fill="#c2c2c2" />
     <rect
       x="56.463"
       y="97.125"
@@ -271,11 +267,7 @@
       stroke="#858585"
       stroke-width="1.600"
     />
-    <use
-      href="#flag-icon"
-      transform="translate(249.214 -125.958)"
-      fill="#c2c2c2"
-    />
+    <use href="#flag-icon" transform="translate(249.214 -125.958)" fill="#c2c2c2" />
     <rect
       x="11.188"
       y="158.972"
@@ -379,11 +371,7 @@
       stroke="#858585"
       stroke-width="1.600"
     />
-    <use
-      href="#flag-icon"
-      transform="translate(249.214 -64.111)"
-      fill="#c2c2c2"
-    />
+    <use href="#flag-icon" transform="translate(249.214 -64.111)" fill="#c2c2c2" />
   </g>
   <rect
     x="39.361"
@@ -525,13 +513,7 @@
     d="M 403.883,355.261 C 402.594,356.179 395.656,351.390 394.074,351.375 C 392.492,351.363 385.473,356.035 384.203,355.093 C 382.930,354.152 385.340,346.074 384.863,344.562 C 384.387,343.054 377.778,337.824 378.281,336.324 C 378.781,334.820 387.211,334.617 388.496,333.699 C 389.785,332.781 392.719,324.875 394.301,324.890 C 395.883,324.902 398.680,332.855 399.953,333.797 C 401.227,334.738 409.649,335.086 410.125,336.593 C 410.602,338.101 403.903,343.222 403.399,344.722 C 402.899,346.222 405.172,354.340 403.883,355.261"
     fill="#b09cc9"
   />
-  <rect
-    x="180.985"
-    y="334.800"
-    width="10.667"
-    height="10.667"
-    fill="#858585"
-  />
+  <rect x="180.985" y="334.800" width="10.667" height="10.667" fill="#858585" />
   <line
     x1="183.651"
     y1="340.133"
@@ -550,13 +532,7 @@
     stroke-width="1.067"
     stroke-linecap="butt"
   />
-  <rect
-    x="432.315"
-    y="334.799"
-    width="10.667"
-    height="10.667"
-    fill="#858585"
-  />
+  <rect x="432.315" y="334.799" width="10.667" height="10.667" fill="#858585" />
   <line
     x1="434.981"
     y1="340.132"
@@ -566,13 +542,7 @@
     stroke-width="1.067"
     stroke-linecap="butt"
   />
-  <rect
-    x="500.924"
-    y="334.803"
-    width="10.667"
-    height="10.667"
-    fill="#858585"
-  />
+  <rect x="500.924" y="334.803" width="10.667" height="10.667" fill="#858585" />
   <line
     x1="503.591"
     y1="338.669"
@@ -657,11 +627,7 @@
       stroke="#858585"
       stroke-width="1.600"
     />
-    <use
-      href="#flag-icon"
-      transform="translate(249.214 -2.264)"
-      fill="#c2c2c2"
-    />
+    <use href="#flag-icon" transform="translate(249.214 -2.264)" fill="#c2c2c2" />
   </g>
   <defs>
     <path

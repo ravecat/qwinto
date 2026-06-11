@@ -20,11 +20,5 @@
     },
     "types": ["node", "vite/client", "vitest", "vitest/browser"]
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.js",
-    "src/**/*.svelte",
-    "tests/**/*.ts",
-    "vite.config.ts"
-  ]
+  "include": ["src/**/*.ts", "src/**/*.js", "src/**/*.svelte", "tests/**/*.ts", "vite.config.ts"]
 }

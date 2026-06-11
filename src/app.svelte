@@ -35,7 +35,7 @@
   const actionError = $derived(actionErrorMessage($session));
   const timeoutError = $derived(timeoutErrorMessage($session));
 
-  function rolledValueForColor(color: DieColor) {
+  function rolledValue(color: DieColor) {
     return game?.dices[color] ?? null;
   }
 
@@ -64,11 +64,8 @@
 
 <main class="game">
   <div class="play-surface">
-    <ul
-      class="side-panel side-panel--participants"
-      aria-label="Participants"
-    >
-      {#each Object.entries($session.value?.members ?? {}) as [ id, member ] (id)}
+    <ul class="side-panel side-panel--participants" aria-label="Participants">
+      {#each Object.entries($session.value?.members ?? {}) as [id, member] (id)}
         <li
           class="participant-slot participant-slot--occupied"
           class:participant-slot--active={id === activeMemberId}
@@ -83,12 +80,9 @@
               loading="eager"
               decoding="async"
               referrerpolicy="no-referrer"
-            >
+            />
           {:else}
-            <span
-              class="participant-initial"
-              aria-hidden="true"
-            >
+            <span class="participant-initial" aria-hidden="true">
               {(member.display_name || "Player").charAt(0).toUpperCase() || "?"}
             </span>
           {/if}
@@ -99,26 +93,24 @@
     <div class="board-frame"><Board /></div>
 
     <div class="side-panel side-panel--dice">
-      <div
-        class="dice-stack"
-        aria-label="Dice"
-      >
+      <div class="dice-stack" aria-label="Dice">
         {#each dice as color (color)}
+          {const selected = $derived(isDieSelected(color))}
+          {const value = $derived(rolledValue(color))}
+
           <button
             class="die die--{color}"
-            class:die--selected={$permissions.can_select_dice &&
-              isDieSelected(color)}
-            class:die--locked={canSeeResult && isDieSelected(color)}
-            class:die--inactive={canSeeResult && !isDieSelected(color)}
+            class:die--selected={$permissions.can_select_dice && selected}
+            class:die--locked={canSeeResult && selected}
+            class:die--inactive={canSeeResult && !selected}
             type="button"
             aria-label="{color} die"
-            aria-pressed={($permissions.can_select_dice || canSeeResult) &&
-              isDieSelected(color)}
+            aria-pressed={($permissions.can_select_dice || canSeeResult) && selected}
             disabled={diceSelectionDisabled}
             onclick={() => toggleDie(color)}
           >
             {#if canSeeResult}
-              <span class="die-value">{rolledValueForColor(color)}</span>
+              <span class="die-value">{value}</span>
             {/if}
           </button>
         {/each}
@@ -135,19 +127,13 @@
           roll
         </button>
       {:else if canSeeResult && game?.sum}
-        <div
-          class="sum-token"
-          aria-label="Rolled sum {game.sum}"
-        >
+        <div class="sum-token" aria-label="Rolled sum {game.sum}">
           {game.sum}
         </div>
       {/if}
 
       {#if decisionControlsVisible}
-        <div
-          class="decision-controls"
-          aria-label="Roll decision"
-        >
+        <div class="decision-controls" aria-label="Roll decision">
           <button
             class="decision-button decision-button--keep"
             type="button"
@@ -179,17 +165,11 @@
       {/if}
 
       {#if actionError}
-        <p
-          class="action-error"
-          aria-live="polite"
-        >
+        <p class="action-error" aria-live="polite">
           {actionError}
         </p>
       {:else if timeoutError}
-        <p
-          class="action-error"
-          aria-live="polite"
-        >
+        <p class="action-error" aria-live="polite">
           {timeoutError}
         </p>
       {/if}
