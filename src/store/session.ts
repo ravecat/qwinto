@@ -31,6 +31,7 @@ export type Permissions = {
   can_roll: boolean;
   can_keep: boolean;
   can_reroll: boolean;
+  can_see_result: boolean;
   can_write_result: boolean;
   can_pass_result: boolean;
   can_take_penalty: boolean;

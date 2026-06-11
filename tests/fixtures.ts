@@ -52,6 +52,7 @@ export const permissions = Factory.define<Permissions>(() => ({
   can_roll: false,
   can_keep: false,
   can_reroll: false,
+  can_see_result: false,
   can_write_result: false,
   can_pass_result: false,
   can_take_penalty: false,

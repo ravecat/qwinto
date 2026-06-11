@@ -13,7 +13,7 @@
 
   let selectedDice: DieColor[] = $derived(game?.dices ?? []);
 
-  const rollResultVisible = $derived(game?.phase === "decision" || game?.phase === "result");
+  const canSeeResult = $derived($permissions.can_see_result);
   const channelReady = $derived($session.status === "ready");
 
   const diceSelectionDisabled = $derived(
@@ -36,6 +36,10 @@
   const timeoutError = $derived(timeoutErrorMessage($session));
 
   function rolledValueForColor(color: DieColor) {
+    if (!canSeeResult) {
+      return null;
+    }
+
     const index = game?.dices.indexOf(color) ?? -1;
 
     return index >= 0 ? (game?.values[index] ?? null) : null;
@@ -108,14 +112,15 @@
         {#each dice as color (color)}
           <button
             class="die die--{color}"
-            class:die--selected={game?.phase === "turn" &&
+            class:die--selected={$permissions.can_select_dice &&
               isDieSelected(color)}
-            class:die--locked={rollResultVisible && isDieSelected(color)}
-            class:die--inactive={rollResultVisible &&
+            class:die--locked={canSeeResult && isDieSelected(color)}
+            class:die--inactive={canSeeResult &&
               !isDieSelected(color)}
             type="button"
             aria-label="{color} die"
-            aria-pressed={isDieSelected(color)}
+            aria-pressed={($permissions.can_select_dice || canSeeResult) &&
+              isDieSelected(color)}
             disabled={diceSelectionDisabled}
             onclick={() => toggleDie(color)}
           >
@@ -134,7 +139,7 @@
         >
           roll
         </button>
-      {:else if game?.sum}
+      {:else if canSeeResult && game?.sum}
         <div
           class="sum-token"
           aria-label="Rolled sum {game.sum}"

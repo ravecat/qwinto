@@ -98,6 +98,7 @@ describe("Game", () => {
               sum: 3,
               attempt: 1,
             },
+            permissions: { can_see_result: true },
           })
           .build(),
       );
@@ -169,6 +170,7 @@ describe("Game", () => {
               sum: 7,
               attempt: 1,
             },
+            permissions: { can_see_result: true },
           })
           .build(),
       );
@@ -200,7 +202,7 @@ describe("Game", () => {
               sum: 9,
               attempt: 1,
             },
-            permissions: { can_keep: true, can_reroll: true },
+            permissions: { can_keep: true, can_reroll: true, can_see_result: true },
           })
           .build(),
       );
@@ -247,6 +249,7 @@ describe("Game", () => {
               sum: 4,
               attempt: 2,
             },
+            permissions: { can_see_result: true },
           })
           .build(),
       );
@@ -273,7 +276,7 @@ describe("Game", () => {
               sum: 6,
               attempt: 1,
             },
-            permissions: { can_keep: true, can_reroll: true },
+            permissions: { can_keep: true, can_reroll: true, can_see_result: true },
           })
           .build({
             processing: { roll: false, keep: true, reroll: false },
@@ -299,7 +302,7 @@ describe("Game", () => {
               sum: 3,
               attempt: 1,
             },
-            permissions: { can_keep: true, can_reroll: true },
+            permissions: { can_keep: true, can_reroll: true, can_see_result: true },
           })
           .build({
             status: "stale",
@@ -331,6 +334,7 @@ describe("Game", () => {
               sum: 2,
               attempt: 1,
             },
+            permissions: { can_see_result: true },
           })
           .build(),
       );
@@ -344,6 +348,29 @@ describe("Game", () => {
       await expect
         .element(screen.getByRole("button", { name: "Reroll same dice" }))
         .not.toBeInTheDocument();
+    });
+
+    test("hides rolled result evidence when permissions deny visibility", async () => {
+      sessionMock.set(
+        sessionState
+          .transient({
+            game: {
+              phase: "decision",
+              dices: ["orange"],
+              values: [3],
+              sum: 3,
+              attempt: 1,
+            },
+          })
+          .build(),
+      );
+
+      const screen = await render(App);
+      const orangeDie = screen.getByRole("button", { name: "orange die" });
+
+      await expect.element(screen.getByLabelText("Rolled sum 3")).not.toBeInTheDocument();
+      await expect.element(orangeDie).not.toHaveTextContent("3");
+      await expect.element(orangeDie).toHaveAttribute("aria-pressed", "false");
     });
 
     test("shows action error before later errors and timeouts", async () => {
@@ -411,6 +438,7 @@ describe("Game", () => {
               sum: 6,
               attempt: 2,
             },
+            permissions: { can_see_result: true },
           })
           .build(),
       );
