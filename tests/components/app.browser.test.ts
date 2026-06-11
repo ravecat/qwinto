@@ -17,6 +17,10 @@ vi.mock("~store/session", async (importOriginal) => {
   };
 });
 
+function boardCell(cell: string) {
+  return document.querySelector(`[aria-label="Qwinto game board"] [data-cell="${cell}"]`);
+}
+
 describe("Game", () => {
   beforeEach(() => {
     sessionMock.reset();
@@ -200,6 +204,12 @@ describe("Game", () => {
               attempt: 1,
             },
             permissions: { can_keep: true, can_reroll: true, can_see_result: true },
+            session: {
+              available_slots: [
+                { row: "orange", slot: 0 },
+                { row: "purple", slot: 8 },
+              ],
+            },
           })
           .build(),
       );
@@ -227,12 +237,47 @@ describe("Game", () => {
       await expect.element(orangeDie).toBeDisabled();
       await expect.element(keepButton).toBeEnabled();
       await expect.element(rerollButton).toBeEnabled();
+      expect(boardCell("orange:0")?.getAttribute("data-available")).toBe("true");
+      expect(boardCell("purple:8")?.getAttribute("data-available")).toBe("true");
+      expect(boardCell("yellow:0")?.getAttribute("data-available")).toBeNull();
+      expect(boardCell("orange:0")?.querySelector(".slot-available-ring")?.getAttribute("x")).toBe(
+        "101.738",
+      );
+      expect(boardCell("orange:0")?.querySelector(".slot-available-ring")?.getAttribute("y")).toBe(
+        "35.278",
+      );
+      expect(
+        boardCell("orange:0")?.querySelector(".slot-available-ring")?.getAttribute("width"),
+      ).toBe("43.228");
+      expect(
+        boardCell("orange:0")?.querySelector(".slot-available-ring")?.getAttribute("height"),
+      ).toBe("43.228");
 
       await keepButton.click();
       await rerollButton.click();
 
       expect(sessionMock.actions.keep).toHaveBeenCalledTimes(1);
       expect(sessionMock.actions.reroll).toHaveBeenCalledTimes(1);
+    });
+
+    test("hides available slots when the projection has no slots", async () => {
+      sessionMock.set(
+        sessionState
+          .transient({
+            game: {
+              phase: "decision",
+              dices: { orange: 4 },
+              sum: 4,
+              attempt: 1,
+            },
+            session: { available_slots: [] },
+          })
+          .build(),
+      );
+
+      await render(App);
+
+      expect(boardCell("orange:0")?.getAttribute("data-available")).toBeNull();
     });
 
     test("hides confirmation controls outside first decision roll when permissions deny them", async () => {

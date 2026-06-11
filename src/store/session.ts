@@ -18,6 +18,11 @@ export type Player = {
   status: PlayerStatus;
 };
 
+export type Slot = {
+  row: DieColor;
+  slot: number;
+};
+
 export type Score = {
   player_id: string;
   rows: Record<DieColor, number>;
@@ -56,6 +61,7 @@ export type Session = {
   members: Record<string, Member>;
   game: Game;
   permissions: Permissions;
+  available_slots?: Slot[];
 };
 
 type ActionError = {
