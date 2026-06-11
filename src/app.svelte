@@ -11,7 +11,7 @@
     return game?.order[game.cursor] ?? null;
   });
 
-  let selectedDice: DieColor[] = $derived(game?.dices ?? []);
+  let selectedDice: DieColor[] = $derived(dice.filter((color) => game?.dices[color] !== undefined));
 
   const canSeeResult = $derived($permissions.can_see_result);
   const channelReady = $derived($session.status === "ready");
@@ -36,13 +36,7 @@
   const timeoutError = $derived(timeoutErrorMessage($session));
 
   function rolledValueForColor(color: DieColor) {
-    if (!canSeeResult) {
-      return null;
-    }
-
-    const index = game?.dices.indexOf(color) ?? -1;
-
-    return index >= 0 ? (game?.values[index] ?? null) : null;
+    return game?.dices[color] ?? null;
   }
 
   function isDieSelected(color: DieColor) {
@@ -115,8 +109,7 @@
             class:die--selected={$permissions.can_select_dice &&
               isDieSelected(color)}
             class:die--locked={canSeeResult && isDieSelected(color)}
-            class:die--inactive={canSeeResult &&
-              !isDieSelected(color)}
+            class:die--inactive={canSeeResult && !isDieSelected(color)}
             type="button"
             aria-label="{color} die"
             aria-pressed={($permissions.can_select_dice || canSeeResult) &&
@@ -124,7 +117,9 @@
             disabled={diceSelectionDisabled}
             onclick={() => toggleDie(color)}
           >
-            <span class="die-value">{rolledValueForColor(color) ?? ""}</span>
+            {#if canSeeResult}
+              <span class="die-value">{rolledValueForColor(color)}</span>
+            {/if}
           </button>
         {/each}
       </div>

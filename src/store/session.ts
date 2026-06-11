@@ -1,6 +1,7 @@
 import { shell } from "@rvct/d20sdk";
 
 export type DieColor = "orange" | "yellow" | "purple";
+export type Dice = Partial<Record<DieColor, number>>;
 export type GamePhase = "setup" | "ready" | "turn" | "decision" | "result" | "finished";
 export type SessionPhase = "waiting_for_players" | "in_progress" | "finished";
 export type PlayerStatus = "ready" | "wrote" | "failed" | "passed";
@@ -42,8 +43,7 @@ export type Game = {
   order: string[];
   cursor: number;
   players: Record<string, Player>;
-  dices: DieColor[];
-  values: number[];
+  dices: Dice;
   sum: number | null;
   attempt: 0 | 1 | 2;
   scores: Record<string, Score>;

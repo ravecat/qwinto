@@ -93,8 +93,7 @@ describe("Game", () => {
           .transient({
             game: {
               phase: "decision",
-              dices: ["orange"],
-              values: [3],
+              dices: { orange: 3 },
               sum: 3,
               attempt: 1,
             },
@@ -165,8 +164,7 @@ describe("Game", () => {
             game: {
               phase: "decision",
               cursor: 0,
-              dices: ["orange", "yellow"],
-              values: [2, 5],
+              dices: { orange: 2, yellow: 5 },
               sum: 7,
               attempt: 1,
             },
@@ -197,8 +195,7 @@ describe("Game", () => {
           .transient({
             game: {
               phase: "decision",
-              dices: ["orange", "purple"],
-              values: [4, 5],
+              dices: { orange: 4, purple: 5 },
               sum: 9,
               attempt: 1,
             },
@@ -244,8 +241,7 @@ describe("Game", () => {
           .transient({
             game: {
               phase: "decision",
-              dices: ["orange"],
-              values: [4],
+              dices: { orange: 4 },
               sum: 4,
               attempt: 2,
             },
@@ -271,8 +267,7 @@ describe("Game", () => {
           .transient({
             game: {
               phase: "decision",
-              dices: ["yellow"],
-              values: [6],
+              dices: { yellow: 6 },
               sum: 6,
               attempt: 1,
             },
@@ -297,8 +292,7 @@ describe("Game", () => {
           .transient({
             game: {
               phase: "decision",
-              dices: ["orange"],
-              values: [3],
+              dices: { orange: 3 },
               sum: 3,
               attempt: 1,
             },
@@ -329,8 +323,7 @@ describe("Game", () => {
           .transient({
             game: {
               phase: "decision",
-              dices: ["purple"],
-              values: [2],
+              dices: { purple: 2 },
               sum: 2,
               attempt: 1,
             },
@@ -356,8 +349,7 @@ describe("Game", () => {
           .transient({
             game: {
               phase: "decision",
-              dices: ["orange"],
-              values: [3],
+              dices: { orange: 3 },
               sum: 3,
               attempt: 1,
             },
@@ -379,8 +371,7 @@ describe("Game", () => {
           .transient({
             game: {
               phase: "decision",
-              dices: ["purple"],
-              values: [2],
+              dices: { purple: 2 },
               sum: 2,
               attempt: 1,
             },
@@ -408,8 +399,7 @@ describe("Game", () => {
           .transient({
             game: {
               phase: "decision",
-              dices: ["yellow"],
-              values: [1],
+              dices: { yellow: 1 },
               sum: 1,
               attempt: 1,
             },
@@ -433,8 +423,7 @@ describe("Game", () => {
           .transient({
             game: {
               phase: "result",
-              dices: ["yellow"],
-              values: [6],
+              dices: { yellow: 6 },
               sum: 6,
               attempt: 2,
             },
