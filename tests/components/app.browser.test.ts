@@ -319,7 +319,7 @@ describe("Game", () => {
             permissions: { can_keep: true, can_reroll: true, can_see_result: true },
           })
           .build({
-            processing: { roll: false, keep: true, reroll: false },
+            processing: { roll: false, keep: true, reroll: false, skip: false },
           }),
       );
 
@@ -349,6 +349,7 @@ describe("Game", () => {
               roll: null,
               keep: null,
               reroll: { reason: "rejected" },
+              skip: null,
             },
           }),
       );
@@ -426,8 +427,9 @@ describe("Game", () => {
               roll: { reason: "" },
               keep: { reason: "rejected" },
               reroll: null,
+              skip: null,
             },
-            timeouts: { roll: false, keep: true, reroll: false },
+            timeouts: { roll: false, keep: true, reroll: false, skip: false },
           }),
       );
 
@@ -450,7 +452,7 @@ describe("Game", () => {
             },
           })
           .build({
-            timeouts: { roll: false, keep: true, reroll: true },
+            timeouts: { roll: false, keep: true, reroll: true, skip: false },
           }),
       );
 
@@ -492,6 +494,65 @@ describe("Game", () => {
       await expect
         .element(screen.getByRole("button", { name: "Reroll same dice" }))
         .not.toBeInTheDocument();
+      await expect
+        .element(screen.getByRole("button", { name: "Pass rerolled result" }))
+        .not.toBeInTheDocument();
+    });
+
+    test("shows available slots and pass for rerolled results when permission allows it", async () => {
+      sessionMock.set(
+        sessionState
+          .transient({
+            game: {
+              phase: "result",
+              dices: { orange: 4, purple: 5 },
+              sum: 9,
+              attempt: 2,
+            },
+            permissions: { can_see_result: true, can_pass_result: true },
+            session: {
+              available_slots: [
+                { row: "orange", slot: 0 },
+                { row: "purple", slot: 8 },
+              ],
+            },
+          })
+          .build(),
+      );
+
+      const screen = await render(App);
+      const passButton = screen.getByRole("button", { name: "Pass rerolled result" });
+
+      await expect.element(passButton).toBeEnabled();
+      expect(boardCell("orange:0")?.getAttribute("data-available")).toBe("true");
+      expect(boardCell("purple:8")?.getAttribute("data-available")).toBe("true");
+      expect(boardCell("yellow:0")?.getAttribute("data-available")).toBeNull();
+
+      await passButton.click();
+
+      expect(sessionMock.actions.skip).toHaveBeenCalledTimes(1);
+    });
+
+    test("shows pass from the projected permission without local phase or attempt checks", async () => {
+      sessionMock.set(
+        sessionState
+          .transient({
+            game: {
+              phase: "result",
+              dices: { yellow: 6 },
+              sum: 6,
+              attempt: 1,
+            },
+            permissions: { can_see_result: true, can_pass_result: true },
+          })
+          .build(),
+      );
+
+      const screen = await render(App);
+
+      await expect
+        .element(screen.getByRole("button", { name: "Pass rerolled result" }))
+        .toBeEnabled();
     });
   });
 });

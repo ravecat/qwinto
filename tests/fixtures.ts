@@ -76,8 +76,8 @@ export const sessionState = Factory.define<SessionState, SessionOverrides>(
     value: session.transient(transientParams).build(),
     status: "ready",
     error: null,
-    processing: { roll: false, keep: false, reroll: false },
-    errors: { roll: null, keep: null, reroll: null },
-    timeouts: { roll: false, keep: false, reroll: false },
+    processing: { roll: false, keep: false, reroll: false, skip: false },
+    errors: { roll: null, keep: null, reroll: null, skip: null },
+    timeouts: { roll: false, keep: false, reroll: false, skip: false },
   }),
 );

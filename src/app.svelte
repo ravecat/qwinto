@@ -24,6 +24,10 @@
   const decisionControlsVisible = $derived($permissions.can_keep || $permissions.can_reroll);
   const keepDisabled = $derived(!channelReady || !$permissions.can_keep || decisionProcessing);
   const rerollDisabled = $derived(!channelReady || !$permissions.can_reroll || decisionProcessing);
+  const passVisible = $derived($permissions.can_pass_result);
+  const passDisabled = $derived(
+    !channelReady || !$permissions.can_pass_result || $session.processing.skip,
+  );
 
   const rollDisabled = $derived(
     !channelReady ||
@@ -59,6 +63,10 @@
 
   function reroll() {
     session.reroll();
+  }
+
+  function pass() {
+    session.skip();
   }
 </script>
 
@@ -159,6 +167,24 @@
               ...
             {:else}
               reroll
+            {/if}
+          </button>
+        </div>
+      {/if}
+
+      {#if passVisible}
+        <div class="result-controls" aria-label="Result actions">
+          <button
+            class="decision-button decision-button--pass"
+            type="button"
+            aria-label="Pass rerolled result"
+            disabled={passDisabled}
+            onclick={pass}
+          >
+            {#if $session.processing.skip}
+              ...
+            {:else}
+              pass
             {/if}
           </button>
         </div>
@@ -371,7 +397,8 @@
     line-height: 1;
   }
 
-  .decision-controls {
+  .decision-controls,
+  .result-controls {
     display: grid;
     gap: clamp(0.25rem, 0.9vmin, 0.4rem);
     width: 100%;

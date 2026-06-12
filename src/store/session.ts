@@ -98,6 +98,10 @@ export const session = runtime.session.extend(({ call }) => ({
   reroll() {
     return call<EmptyOk, ActionError>("reroll", {});
   },
+
+  skip() {
+    return call<EmptyOk, ActionError>("skip", {});
+  },
 }));
 
 type SessionSnapshot = Parameters<Parameters<typeof session.subscribe>[0]>[0];
