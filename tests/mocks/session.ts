@@ -9,15 +9,38 @@ export function createSessionMock() {
     roll: vi.fn(),
     keep: vi.fn(),
     reroll: vi.fn(),
+    write: vi.fn(),
     skip: vi.fn(),
+    takePenalty: vi.fn(),
   };
   const initialState = {
     value: null,
     status: "loading",
     error: null,
-    processing: { roll: false, keep: false, reroll: false, skip: false },
-    errors: { roll: null, keep: null, reroll: null, skip: null },
-    timeouts: { roll: false, keep: false, reroll: false, skip: false },
+    processing: {
+      roll: false,
+      keep: false,
+      reroll: false,
+      write: false,
+      skip: false,
+      takePenalty: false,
+    },
+    errors: {
+      roll: null,
+      keep: null,
+      reroll: null,
+      write: null,
+      skip: null,
+      takePenalty: null,
+    },
+    timeouts: {
+      roll: false,
+      keep: false,
+      reroll: false,
+      write: false,
+      skip: false,
+      takePenalty: false,
+    },
   } satisfies SessionState;
   const state = atom<SessionState>(initialState);
 
@@ -28,7 +51,9 @@ export function createSessionMock() {
       roll: actions.roll,
       keep: actions.keep,
       reroll: actions.reroll,
+      write: actions.write,
       skip: actions.skip,
+      takePenalty: actions.takePenalty,
     },
     set: state.set,
     reset() {
@@ -36,7 +61,9 @@ export function createSessionMock() {
       actions.roll.mockReset();
       actions.keep.mockReset();
       actions.reroll.mockReset();
+      actions.write.mockReset();
       actions.skip.mockReset();
+      actions.takePenalty.mockReset();
     },
   };
 }

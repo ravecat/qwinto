@@ -1,5 +1,7 @@
 <script lang="ts">
   import board from "~assets/board.svg";
+  import permissions from "~store/permissions";
+  import { selectedSlot, selectSlot } from "~store/overlay.svelte";
   import { session, type Slot } from "~store/session";
 
   type BoardSlot = Slot & {
@@ -7,6 +9,11 @@
     y: number;
   };
 
+  const viewBoxWidth = 659.967;
+  const viewBoxHeight = 370.908;
+  const viewBoxMinX = -29.782;
+  const groupTranslateX = -15.455;
+  const groupTranslateY = 5.016;
   const slotSize = 43.228;
   const slotRadius = 7.856;
 
@@ -40,15 +47,11 @@
     { row: "purple", slot: 8, x: 418.663, y: 158.972 },
   ];
 
+  const canSelectSlot = $derived($session.status === "ready" && $permissions.can_write_result);
   const availableSlots = $derived($session.value?.available_slots ?? []);
-  const availableCellKeys = $derived(new Set(availableSlots.map(key)));
-
-  function key({ row, slot }: Slot) {
-    return `${row}:${slot}`;
-  }
 </script>
 
-<div class="board" role="img" aria-label="Qwinto game board">
+<div class="board" role="group" aria-label="Qwinto game board">
   <img class="board-art" src={board} alt="" aria-hidden="true" draggable="false" />
 
   <svg
@@ -59,14 +62,18 @@
     focusable="false"
   >
     <g transform="translate(-15.455 5.016)">
-      {#each slots as slot (key(slot))}
-        {@const slotKey = key(slot)}
-        {@const available = availableCellKeys.has(slotKey)}
+      {#each slots as slot (slot)}
+        {@const available = availableSlots.some(
+          (availableSlot) => availableSlot.row === slot.row && availableSlot.slot === slot.slot,
+        )}
+        {@const selected =
+          selectedSlot.value?.row === slot.row && selectedSlot.value.slot === slot.slot}
 
-        <g data-cell={slotKey} data-available={available ? "true" : undefined}>
+        <g data-row={slot.row} data-slot={slot.slot}>
           {#if available}
             <rect
               class="slot-available-ring"
+              class:slot-available-ring--selected={selected}
               x={slot.x}
               y={slot.y}
               width={slotSize}
@@ -79,6 +86,32 @@
       {/each}
     </g>
   </svg>
+
+  {#if canSelectSlot}
+    <div class="board-hit-layer" aria-label="Available cells">
+      {#each slots as slot (slot)}
+        {@const available = availableSlots.some(
+          (availableSlot) => availableSlot.row === slot.row && availableSlot.slot === slot.slot,
+        )}
+        {@const selected =
+          selectedSlot.value?.row === slot.row && selectedSlot.value.slot === slot.slot}
+
+        {#if available}
+          <button
+            class="slot-hit-target"
+            style:left={`${((slot.x + groupTranslateX - viewBoxMinX) / viewBoxWidth) * 100}%`}
+            style:top={`${((slot.y + groupTranslateY) / viewBoxHeight) * 100}%`}
+            style:width={`${(slotSize / viewBoxWidth) * 100}%`}
+            style:height={`${(slotSize / viewBoxHeight) * 100}%`}
+            type="button"
+            aria-label="Select {slot.row} slot {slot.slot + 1}"
+            aria-pressed={selected}
+            onclick={() => selectSlot(slot)}
+          ></button>
+        {/if}
+      {/each}
+    </div>
+  {/if}
 </div>
 
 <style>
@@ -110,5 +143,28 @@
     fill: none;
     stroke: #2f6fed;
     stroke-width: 3.2;
+  }
+
+  .slot-available-ring--selected {
+    fill: rgb(47 111 237 / 0.18);
+  }
+
+  .board-hit-layer {
+    position: absolute;
+    inset: 0;
+  }
+
+  .slot-hit-target {
+    position: absolute;
+    padding: 0;
+    border: 0;
+    border-radius: 0.45rem;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .slot-hit-target:focus-visible {
+    outline: 0.16rem solid #111827;
+    outline-offset: 0.08rem;
   }
 </style>

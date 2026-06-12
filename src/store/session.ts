@@ -99,8 +99,16 @@ export const session = runtime.session.extend(({ call }) => ({
     return call<EmptyOk, ActionError>("reroll", {});
   },
 
+  write(payload: Slot) {
+    return call<EmptyOk, ActionError>("write", payload);
+  },
+
   skip() {
     return call<EmptyOk, ActionError>("skip", {});
+  },
+
+  takePenalty() {
+    return call<EmptyOk, ActionError>("take_penalty", {});
   },
 }));
 

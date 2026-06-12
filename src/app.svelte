@@ -1,7 +1,14 @@
 <script lang="ts">
   import Board from "~components/board.svelte";
   import permissions from "~store/permissions";
-  import { actionErrorMessage, type DieColor, session, timeoutErrorMessage } from "~store/session";
+  import { selectedSlot } from "~store/overlay.svelte";
+  import {
+    actionErrorMessage,
+    type DieColor,
+    session,
+    type Slot,
+    timeoutErrorMessage,
+  } from "~store/session";
 
   const dice: DieColor[] = ["orange", "yellow", "purple"];
 
@@ -20,13 +27,37 @@
     !channelReady || !$permissions.can_select_dice || $session.processing.roll,
   );
 
-  const decisionProcessing = $derived($session.processing.keep || $session.processing.reroll);
-  const decisionControlsVisible = $derived($permissions.can_keep || $permissions.can_reroll);
-  const keepDisabled = $derived(!channelReady || !$permissions.can_keep || decisionProcessing);
-  const rerollDisabled = $derived(!channelReady || !$permissions.can_reroll || decisionProcessing);
-  const passVisible = $derived($permissions.can_pass_result);
+  const selectedAvailableSlot = $derived.by(() => {
+    const slotSelection = selectedSlot.value;
+
+    if (slotSelection === null) {
+      return null;
+    }
+
+    const availableSlots = $session.value?.available_slots ?? [];
+    return availableSlots.find((slot) => sameSlot(slot, slotSelection)) ?? null;
+  });
+  const confirmVisible = $derived($permissions.can_write_result);
+  const confirmDisabled = $derived(
+    !channelReady ||
+      !$permissions.can_write_result ||
+      selectedAvailableSlot === null ||
+      $session.processing.write,
+  );
+  const rerollVisible = $derived($permissions.can_reroll);
+  const rerollDisabled = $derived(
+    !channelReady || !$permissions.can_reroll || $session.processing.reroll,
+  );
+  const cancelVisible = $derived($permissions.can_take_penalty);
+  const cancelDisabled = $derived(
+    !channelReady || !$permissions.can_take_penalty || $session.processing.takePenalty,
+  );
+  const passVisible = $derived($permissions.can_pass_result && !$permissions.can_take_penalty);
   const passDisabled = $derived(
     !channelReady || !$permissions.can_pass_result || $session.processing.skip,
+  );
+  const actionBarVisible = $derived(
+    rerollVisible || cancelVisible || confirmVisible || passVisible,
   );
 
   const rollDisabled = $derived(
@@ -38,6 +69,10 @@
 
   const actionError = $derived(actionErrorMessage($session));
   const timeoutError = $derived(timeoutErrorMessage($session));
+
+  function sameSlot(slot: Slot, other: Slot) {
+    return slot.row === other.row && slot.slot === other.slot;
+  }
 
   function rolledValue(color: DieColor) {
     return game?.dices[color] ?? null;
@@ -57,12 +92,17 @@
     session.roll({ colors: selectedDice });
   }
 
-  function keep() {
-    session.keep();
-  }
-
   function reroll() {
     session.reroll();
+  }
+
+  function confirm() {
+    const { row, slot } = selectedAvailableSlot!;
+    session.write({ row, slot });
+  }
+
+  function cancel() {
+    session.takePenalty();
   }
 
   function pass() {
@@ -98,7 +138,9 @@
       {/each}
     </ul>
 
-    <div class="board-frame"><Board /></div>
+    <div class="board-frame">
+      <Board />
+    </div>
 
     <div class="side-panel side-panel--dice">
       <div class="dice-stack" aria-label="Dice">
@@ -140,56 +182,6 @@
         </div>
       {/if}
 
-      {#if decisionControlsVisible}
-        <div class="decision-controls" aria-label="Roll decision">
-          <button
-            class="decision-button decision-button--keep"
-            type="button"
-            aria-label="Keep first roll result"
-            disabled={keepDisabled}
-            onclick={keep}
-          >
-            {#if $session.processing.keep}
-              ...
-            {:else}
-              keep
-            {/if}
-          </button>
-
-          <button
-            class="decision-button decision-button--reroll"
-            type="button"
-            aria-label="Reroll same dice"
-            disabled={rerollDisabled}
-            onclick={reroll}
-          >
-            {#if $session.processing.reroll}
-              ...
-            {:else}
-              reroll
-            {/if}
-          </button>
-        </div>
-      {/if}
-
-      {#if passVisible}
-        <div class="result-controls" aria-label="Result actions">
-          <button
-            class="decision-button decision-button--pass"
-            type="button"
-            aria-label="Pass rerolled result"
-            disabled={passDisabled}
-            onclick={pass}
-          >
-            {#if $session.processing.skip}
-              ...
-            {:else}
-              pass
-            {/if}
-          </button>
-        </div>
-      {/if}
-
       {#if actionError}
         <p class="action-error" aria-live="polite">
           {actionError}
@@ -200,6 +192,56 @@
         </p>
       {/if}
     </div>
+
+    {#if actionBarVisible}
+      <div class="action-bar" aria-label="Result actions">
+        {#if rerollVisible}
+          <button
+            class="action-button action-button--reroll"
+            type="button"
+            aria-label="Reroll same dice"
+            disabled={rerollDisabled}
+            onclick={reroll}
+          >
+            Reroll
+          </button>
+        {/if}
+
+        {#if cancelVisible}
+          <button
+            class="action-button action-button--cancel"
+            type="button"
+            aria-label="Cancel roll and take penalty"
+            disabled={cancelDisabled}
+            onclick={cancel}
+          >
+            cancel
+          </button>
+        {:else if passVisible}
+          <button
+            class="action-button action-button--pass"
+            type="button"
+            aria-label="Pass result"
+            disabled={passDisabled}
+            onclick={pass}
+          >
+            pass
+          </button>
+        {/if}
+
+        {#if confirmVisible}
+          <button
+            class="action-button action-button--confirm"
+            type="button"
+            aria-label="Confirm selected cell"
+            disabled={confirmDisabled}
+            onclick={confirm}
+          >
+            Confirm
+          </button>
+        {/if}
+      </div>
+    {/if}
   </div>
 </main>
 
@@ -225,6 +267,7 @@
       minmax(3.75rem, 0.16fr)
       minmax(0, 1fr)
       minmax(3.75rem, 0.16fr);
+    grid-template-rows: minmax(0, auto) auto;
     align-items: stretch;
     gap: clamp(0.5rem, 1.6vmin, 0.85rem);
     width: min(100%, calc((100vh - 2rem) * 2.35), 68rem);
@@ -397,43 +440,57 @@
     line-height: 1;
   }
 
-  .decision-controls,
-  .result-controls {
+  .action-bar {
     display: grid;
-    gap: clamp(0.25rem, 0.9vmin, 0.4rem);
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(0.5rem, 1.6vmin, 0.85rem);
     width: 100%;
   }
 
-  .decision-button {
+  .action-button {
     width: 100%;
-    min-height: 1.55rem;
-    padding: 0 0.2rem;
+    min-height: 2.6rem;
+    padding: 0 0.45rem;
     border: 0.1rem solid #858585;
     border-radius: 0.4rem;
     background: #ffffff;
     color: #333840;
     cursor: pointer;
     font: inherit;
-    font-size: clamp(0.5rem, 1.25vmin, 0.64rem);
+    font-size: clamp(0.72rem, 1.6vmin, 0.9rem);
     font-weight: 800;
     line-height: 1;
   }
 
-  .decision-button:disabled {
+  .action-button--reroll {
+    grid-column: 1;
+  }
+
+  .action-button--cancel,
+  .action-button--pass {
+    grid-column: 2;
+  }
+
+  .action-button--confirm {
+    grid-column: 3;
+  }
+
+  .action-button:disabled {
     cursor: default;
   }
 
-  .decision-button:hover:not(:disabled),
+  .action-button:hover:not(:disabled),
   .roll-button:hover:not(:disabled) {
     background: #eef0f4;
   }
 
-  .decision-button:active:not(:disabled),
+  .action-button:active:not(:disabled),
   .roll-button:active:not(:disabled) {
     transform: translateY(0.04rem);
   }
 
-  .decision-button:focus-visible,
+  .action-button:focus-visible,
   .roll-button:focus-visible {
     outline: 0.16rem solid #2f6fed;
     outline-offset: 0.14rem;
@@ -478,9 +535,14 @@
       border-radius: 0.32rem;
     }
 
-    .decision-button {
-      min-height: 1.35rem;
-      padding: 0 0.12rem;
+    .action-bar {
+      gap: 0.4rem;
+    }
+
+    .action-button {
+      min-height: 2.2rem;
+      padding: 0 0.25rem;
+      font-size: clamp(0.62rem, 2.4vmin, 0.78rem);
     }
   }
 </style>

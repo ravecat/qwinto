@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { render } from "vitest-browser-svelte";
 import App from "~/app.svelte";
+import { clearSelectedSlot } from "~store/overlay.svelte";
 import { sessionState } from "../fixtures";
 
 const sessionMock = await vi.hoisted(async () => {
@@ -17,13 +18,20 @@ vi.mock("~store/session", async (importOriginal) => {
   };
 });
 
-function boardCell(cell: string) {
-  return document.querySelector(`[aria-label="Qwinto game board"] [data-cell="${cell}"]`);
+function boardCell(row: string, slot: number) {
+  return document.querySelector(
+    `[aria-label="Qwinto game board"] [data-row="${row}"][data-slot="${slot}"]`,
+  );
+}
+
+function boardCellRing(row: string, slot: number) {
+  return boardCell(row, slot)?.querySelector(".slot-available-ring");
 }
 
 describe("Game", () => {
   beforeEach(() => {
     sessionMock.reset();
+    clearSelectedSlot();
   });
 
   describe("turn phase", () => {
@@ -193,7 +201,7 @@ describe("Game", () => {
   });
 
   describe("decision phase", () => {
-    test("after first roll shows rolled dice and confirmation controls", async () => {
+    test("after first roll shows rolled dice and active response controls", async () => {
       sessionMock.set(
         sessionState
           .transient({
@@ -203,7 +211,12 @@ describe("Game", () => {
               sum: 9,
               attempt: 1,
             },
-            permissions: { can_keep: true, can_reroll: true, can_see_result: true },
+            permissions: {
+              can_reroll: true,
+              can_see_result: true,
+              can_write_result: true,
+              can_take_penalty: true,
+            },
             session: {
               available_slots: [
                 { row: "orange", slot: 0 },
@@ -218,11 +231,14 @@ describe("Game", () => {
       const orangeDie = screen.getByRole("button", { name: "orange die" });
       const yellowDie = screen.getByRole("button", { name: "yellow die" });
       const purpleDie = screen.getByRole("button", { name: "purple die" });
-      const keepButton = screen.getByRole("button", {
-        name: "Keep first roll result",
-      });
       const rerollButton = screen.getByRole("button", {
         name: "Reroll same dice",
+      });
+      const cancelButton = screen.getByRole("button", {
+        name: "Cancel roll and take penalty",
+      });
+      const confirmButton = screen.getByRole("button", {
+        name: "Confirm selected cell",
       });
 
       await expect.element(screen.getByLabelText("Rolled sum 9")).toBeVisible();
@@ -235,28 +251,27 @@ describe("Game", () => {
       await expect.element(orangeDie).toHaveTextContent("4");
       await expect.element(purpleDie).toHaveTextContent("5");
       await expect.element(orangeDie).toBeDisabled();
-      await expect.element(keepButton).toBeEnabled();
       await expect.element(rerollButton).toBeEnabled();
-      expect(boardCell("orange:0")?.getAttribute("data-available")).toBe("true");
-      expect(boardCell("purple:8")?.getAttribute("data-available")).toBe("true");
-      expect(boardCell("yellow:0")?.getAttribute("data-available")).toBeNull();
-      expect(boardCell("orange:0")?.querySelector(".slot-available-ring")?.getAttribute("x")).toBe(
-        "101.738",
-      );
-      expect(boardCell("orange:0")?.querySelector(".slot-available-ring")?.getAttribute("y")).toBe(
-        "35.278",
-      );
-      expect(
-        boardCell("orange:0")?.querySelector(".slot-available-ring")?.getAttribute("width"),
-      ).toBe("43.228");
-      expect(
-        boardCell("orange:0")?.querySelector(".slot-available-ring")?.getAttribute("height"),
-      ).toBe("43.228");
+      await expect.element(cancelButton).toBeEnabled();
+      await expect.element(confirmButton).toBeDisabled();
+      const orangeRing = boardCellRing("orange", 0);
+      expect(orangeRing).not.toBeNull();
+      for (const attribute of ["x", "y", "width", "height"]) {
+        expect(orangeRing?.hasAttribute(attribute)).toBe(true);
+      }
+      expect(boardCellRing("purple", 8)).not.toBeNull();
+      expect(boardCellRing("yellow", 0)).toBeNull();
 
-      await keepButton.click();
+      await screen.getByRole("button", { name: "Select orange slot 1" }).click();
+
+      await expect.element(confirmButton).toBeEnabled();
+
+      await confirmButton.click();
+      await cancelButton.click();
       await rerollButton.click();
 
-      expect(sessionMock.actions.keep).toHaveBeenCalledTimes(1);
+      expect(sessionMock.actions.write).toHaveBeenCalledWith({ row: "orange", slot: 0 });
+      expect(sessionMock.actions.takePenalty).toHaveBeenCalledTimes(1);
       expect(sessionMock.actions.reroll).toHaveBeenCalledTimes(1);
     });
 
@@ -277,10 +292,10 @@ describe("Game", () => {
 
       await render(App);
 
-      expect(boardCell("orange:0")?.getAttribute("data-available")).toBeNull();
+      expect(boardCellRing("orange", 0)).toBeNull();
     });
 
-    test("hides confirmation controls outside first decision roll when permissions deny them", async () => {
+    test("hides response controls when permissions deny them", async () => {
       sessionMock.set(
         sessionState
           .transient({
@@ -299,14 +314,17 @@ describe("Game", () => {
 
       await expect.element(screen.getByLabelText("Rolled sum 4")).toBeVisible();
       await expect
-        .element(screen.getByRole("button", { name: "Keep first roll result" }))
+        .element(screen.getByRole("button", { name: "Reroll same dice" }))
         .not.toBeInTheDocument();
       await expect
-        .element(screen.getByRole("button", { name: "Reroll same dice" }))
+        .element(screen.getByRole("button", { name: "Cancel roll and take penalty" }))
+        .not.toBeInTheDocument();
+      await expect
+        .element(screen.getByRole("button", { name: "Confirm selected cell" }))
         .not.toBeInTheDocument();
     });
 
-    test("disables both confirmation actions while one is processing", async () => {
+    test("disables confirm while write is processing", async () => {
       sessionMock.set(
         sessionState
           .transient({
@@ -316,19 +334,28 @@ describe("Game", () => {
               sum: 6,
               attempt: 1,
             },
-            permissions: { can_keep: true, can_reroll: true, can_see_result: true },
+            permissions: { can_see_result: true, can_write_result: true },
+            session: { available_slots: [{ row: "yellow", slot: 0 }] },
           })
           .build({
-            processing: { roll: false, keep: true, reroll: false, skip: false },
+            processing: {
+              roll: false,
+              keep: false,
+              reroll: false,
+              write: true,
+              skip: false,
+              takePenalty: false,
+            },
           }),
       );
 
       const screen = await render(App);
 
+      await screen.getByRole("button", { name: "Select yellow slot 1" }).click();
+
       await expect
-        .element(screen.getByRole("button", { name: "Keep first roll result" }))
+        .element(screen.getByRole("button", { name: "Confirm selected cell" }))
         .toBeDisabled();
-      await expect.element(screen.getByRole("button", { name: "Reroll same dice" })).toBeDisabled();
     });
 
     test("disables controls while the session is not ready and action errors are visible", async () => {
@@ -341,7 +368,12 @@ describe("Game", () => {
               sum: 3,
               attempt: 1,
             },
-            permissions: { can_keep: true, can_reroll: true, can_see_result: true },
+            permissions: {
+              can_reroll: true,
+              can_see_result: true,
+              can_write_result: true,
+              can_take_penalty: true,
+            },
           })
           .build({
             status: "stale",
@@ -349,17 +381,22 @@ describe("Game", () => {
               roll: null,
               keep: null,
               reroll: { reason: "rejected" },
+              write: null,
               skip: null,
+              takePenalty: null,
             },
           }),
       );
 
       const screen = await render(App);
 
-      await expect
-        .element(screen.getByRole("button", { name: "Keep first roll result" }))
-        .toBeDisabled();
       await expect.element(screen.getByRole("button", { name: "Reroll same dice" })).toBeDisabled();
+      await expect
+        .element(screen.getByRole("button", { name: "Cancel roll and take penalty" }))
+        .toBeDisabled();
+      await expect
+        .element(screen.getByRole("button", { name: "Confirm selected cell" }))
+        .toBeDisabled();
       await expect.element(screen.getByText("rejected")).toBeVisible();
     });
 
@@ -382,10 +419,13 @@ describe("Game", () => {
 
       await expect.element(screen.getByLabelText("Rolled sum 2")).toBeVisible();
       await expect
-        .element(screen.getByRole("button", { name: "Keep first roll result" }))
+        .element(screen.getByRole("button", { name: "Reroll same dice" }))
         .not.toBeInTheDocument();
       await expect
-        .element(screen.getByRole("button", { name: "Reroll same dice" }))
+        .element(screen.getByRole("button", { name: "Cancel roll and take penalty" }))
+        .not.toBeInTheDocument();
+      await expect
+        .element(screen.getByRole("button", { name: "Confirm selected cell" }))
         .not.toBeInTheDocument();
     });
 
@@ -427,9 +467,18 @@ describe("Game", () => {
               roll: { reason: "" },
               keep: { reason: "rejected" },
               reroll: null,
+              write: null,
               skip: null,
+              takePenalty: null,
             },
-            timeouts: { roll: false, keep: true, reroll: false, skip: false },
+            timeouts: {
+              roll: false,
+              keep: true,
+              reroll: false,
+              write: false,
+              skip: false,
+              takePenalty: false,
+            },
           }),
       );
 
@@ -452,7 +501,14 @@ describe("Game", () => {
             },
           })
           .build({
-            timeouts: { roll: false, keep: true, reroll: true, skip: false },
+            timeouts: {
+              roll: false,
+              keep: true,
+              reroll: true,
+              write: false,
+              skip: false,
+              takePenalty: false,
+            },
           }),
       );
 
@@ -489,17 +545,20 @@ describe("Game", () => {
         .element(screen.getByRole("button", { name: "orange die" }))
         .toHaveAttribute("aria-pressed", "false");
       await expect
-        .element(screen.getByRole("button", { name: "Keep first roll result" }))
-        .not.toBeInTheDocument();
-      await expect
         .element(screen.getByRole("button", { name: "Reroll same dice" }))
         .not.toBeInTheDocument();
       await expect
-        .element(screen.getByRole("button", { name: "Pass rerolled result" }))
+        .element(screen.getByRole("button", { name: "Cancel roll and take penalty" }))
+        .not.toBeInTheDocument();
+      await expect
+        .element(screen.getByRole("button", { name: "Confirm selected cell" }))
+        .not.toBeInTheDocument();
+      await expect
+        .element(screen.getByRole("button", { name: "Pass result" }))
         .not.toBeInTheDocument();
     });
 
-    test("shows available slots and pass for rerolled results when permission allows it", async () => {
+    test("shows selectable slots, confirm, and pass for passive result responses", async () => {
       sessionMock.set(
         sessionState
           .transient({
@@ -509,7 +568,7 @@ describe("Game", () => {
               sum: 9,
               attempt: 2,
             },
-            permissions: { can_see_result: true, can_pass_result: true },
+            permissions: { can_see_result: true, can_write_result: true, can_pass_result: true },
             session: {
               available_slots: [
                 { row: "orange", slot: 0 },
@@ -521,16 +580,23 @@ describe("Game", () => {
       );
 
       const screen = await render(App);
-      const passButton = screen.getByRole("button", { name: "Pass rerolled result" });
+      const passButton = screen.getByRole("button", { name: "Pass result" });
+      const confirmButton = screen.getByRole("button", { name: "Confirm selected cell" });
 
       await expect.element(passButton).toBeEnabled();
-      expect(boardCell("orange:0")?.getAttribute("data-available")).toBe("true");
-      expect(boardCell("purple:8")?.getAttribute("data-available")).toBe("true");
-      expect(boardCell("yellow:0")?.getAttribute("data-available")).toBeNull();
+      await expect.element(confirmButton).toBeDisabled();
+      expect(boardCellRing("orange", 0)).not.toBeNull();
+      expect(boardCellRing("purple", 8)).not.toBeNull();
+      expect(boardCellRing("yellow", 0)).toBeNull();
+
+      await screen.getByRole("button", { name: "Select purple slot 9" }).click();
+      await expect.element(confirmButton).toBeEnabled();
 
       await passButton.click();
+      await confirmButton.click();
 
       expect(sessionMock.actions.skip).toHaveBeenCalledTimes(1);
+      expect(sessionMock.actions.write).toHaveBeenCalledWith({ row: "purple", slot: 8 });
     });
 
     test("shows pass from the projected permission without local phase or attempt checks", async () => {
@@ -550,9 +616,7 @@ describe("Game", () => {
 
       const screen = await render(App);
 
-      await expect
-        .element(screen.getByRole("button", { name: "Pass rerolled result" }))
-        .toBeEnabled();
+      await expect.element(screen.getByRole("button", { name: "Pass result" })).toBeEnabled();
     });
   });
 });
