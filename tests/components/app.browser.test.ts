@@ -25,7 +25,8 @@ function boardCell(row: string, slot: number) {
 }
 
 function boardCellRing(row: string, slot: number) {
-  return boardCell(row, slot)?.querySelector(".slot-available-ring");
+  const ring = boardCell(row, slot)?.firstElementChild;
+  return ring?.tagName.toLowerCase() === "rect" ? ring : null;
 }
 
 describe("Game", () => {

@@ -6,7 +6,6 @@
     actionErrorMessage,
     type DieColor,
     session,
-    type Slot,
     timeoutErrorMessage,
   } from "~store/session";
 
@@ -27,21 +26,11 @@
     !channelReady || !$permissions.can_roll || $session.processing.roll,
   );
 
-  const selectedAvailableSlot = $derived.by(() => {
-    const slotSelection = selectedSlot.value;
-
-    if (slotSelection === null) {
-      return null;
-    }
-
-    const availableSlots = $session.value?.available_slots ?? [];
-    return availableSlots.find((slot) => sameSlot(slot, slotSelection)) ?? null;
-  });
   const confirmVisible = $derived($permissions.can_write);
   const confirmDisabled = $derived(
     !channelReady ||
       !$permissions.can_write ||
-      selectedAvailableSlot === null ||
+      selectedSlot.value === null ||
       $session.processing.write,
   );
   const rerollVisible = $derived($permissions.can_reroll);
@@ -70,10 +59,6 @@
   const actionError = $derived(actionErrorMessage($session));
   const timeoutError = $derived(timeoutErrorMessage($session));
 
-  function sameSlot(slot: Slot, other: Slot) {
-    return slot.row === other.row && slot.slot === other.slot;
-  }
-
   function rolledValue(color: DieColor) {
     return game?.dices[color] ?? null;
   }
@@ -97,8 +82,7 @@
   }
 
   function confirm() {
-    const { row, slot } = selectedAvailableSlot!;
-    session.write({ row, slot });
+    session.write(selectedSlot.value!);
   }
 
   function cancel() {
