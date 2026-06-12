@@ -138,7 +138,7 @@
           disabled={rollDisabled}
           onclick={roll}
         >
-          roll
+          Roll
         </button>
       {:else if canSeeRoll && game?.sum}
         <div class="sum-token" aria-label="Rolled sum {game.sum}">
