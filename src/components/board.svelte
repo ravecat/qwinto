@@ -47,7 +47,7 @@
     { row: "purple", slot: 8, x: 418.663, y: 158.972 },
   ];
 
-  const canSelectSlot = $derived($session.status === "ready" && $permissions.can_write_result);
+  const canSelectSlot = $derived($session.status === "ready" && $permissions.can_write);
   const availableSlots = $derived($session.value?.available_slots ?? []);
 </script>
 

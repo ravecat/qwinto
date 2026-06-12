@@ -7,11 +7,10 @@ type SessionState = Parameters<Parameters<typeof runtimeSession.subscribe>[0]>[0
 export function createSessionMock() {
   const actions = {
     roll: vi.fn(),
-    keep: vi.fn(),
     reroll: vi.fn(),
     write: vi.fn(),
-    skip: vi.fn(),
-    takePenalty: vi.fn(),
+    pass: vi.fn(),
+    penalize: vi.fn(),
   };
   const initialState = {
     value: null,
@@ -19,27 +18,24 @@ export function createSessionMock() {
     error: null,
     processing: {
       roll: false,
-      keep: false,
       reroll: false,
       write: false,
-      skip: false,
-      takePenalty: false,
+      pass: false,
+      penalize: false,
     },
     errors: {
       roll: null,
-      keep: null,
       reroll: null,
       write: null,
-      skip: null,
-      takePenalty: null,
+      pass: null,
+      penalize: null,
     },
     timeouts: {
       roll: false,
-      keep: false,
       reroll: false,
       write: false,
-      skip: false,
-      takePenalty: false,
+      pass: false,
+      penalize: false,
     },
   } satisfies SessionState;
   const state = atom<SessionState>(initialState);
@@ -49,21 +45,19 @@ export function createSessionMock() {
     session: {
       subscribe: state.subscribe,
       roll: actions.roll,
-      keep: actions.keep,
       reroll: actions.reroll,
       write: actions.write,
-      skip: actions.skip,
-      takePenalty: actions.takePenalty,
+      pass: actions.pass,
+      penalize: actions.penalize,
     },
     set: state.set,
     reset() {
       state.set(initialState);
       actions.roll.mockReset();
-      actions.keep.mockReset();
       actions.reroll.mockReset();
       actions.write.mockReset();
-      actions.skip.mockReset();
-      actions.takePenalty.mockReset();
+      actions.pass.mockReset();
+      actions.penalize.mockReset();
     },
   };
 }

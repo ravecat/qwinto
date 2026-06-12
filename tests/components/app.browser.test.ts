@@ -34,9 +34,9 @@ describe("Game", () => {
     clearSelectedSlot();
   });
 
-  describe("turn phase", () => {
+  describe("roll phase", () => {
     test("renders active participant from the cursor", async () => {
-      sessionMock.set(sessionState.transient({ game: { phase: "turn", cursor: 1 } }).build());
+      sessionMock.set(sessionState.transient({ game: { phase: "roll", cursor: 1 } }).build());
 
       const screen = await render(App);
 
@@ -53,8 +53,8 @@ describe("Game", () => {
       sessionMock.set(
         sessionState
           .transient({
-            game: { phase: "turn" },
-            permissions: { can_select_dice: true, can_roll: true },
+            game: { phase: "roll" },
+            permissions: { can_roll: true },
           })
           .build(),
       );
@@ -85,8 +85,8 @@ describe("Game", () => {
       });
     });
 
-    test("disables dice selection and rolling when permissions deny turn actions", async () => {
-      sessionMock.set(sessionState.transient({ game: { phase: "turn" } }).build());
+    test("disables dice selection and rolling when permissions deny roll actions", async () => {
+      sessionMock.set(sessionState.transient({ game: { phase: "roll" } }).build());
 
       const screen = await render(App);
       const orangeDie = screen.getByRole("button", { name: "orange die" });
@@ -99,17 +99,17 @@ describe("Game", () => {
       await expect.element(orangeDie).toHaveAttribute("aria-pressed", "false");
     });
 
-    test("disables dice selection outside turn when permissions deny it", async () => {
+    test("disables dice selection outside roll when permissions deny it", async () => {
       sessionMock.set(
         sessionState
           .transient({
             game: {
-              phase: "decision",
+              phase: "write_or_pass",
               dices: { orange: 3 },
               sum: 3,
               attempt: 1,
             },
-            permissions: { can_see_result: true },
+            permissions: { can_see_roll: true },
           })
           .build(),
       );
@@ -121,14 +121,14 @@ describe("Game", () => {
       await expect.element(orangeDie).toHaveAttribute("aria-pressed", "true");
     });
 
-    test("preserves local dice choice across turn processing updates", async () => {
-      const turnState = sessionState
+    test("preserves local dice choice across roll processing updates", async () => {
+      const rollState = sessionState
         .transient({
-          game: { phase: "turn" },
-          permissions: { can_select_dice: true, can_roll: true },
+          game: { phase: "roll" },
+          permissions: { can_roll: true },
         })
         .build();
-      sessionMock.set(turnState);
+      sessionMock.set(rollState);
 
       const screen = await render(App);
       const orangeDie = screen.getByRole("button", { name: "orange die" });
@@ -138,20 +138,20 @@ describe("Game", () => {
       await expect.element(orangeDie).toHaveAttribute("aria-pressed", "true");
 
       sessionMock.set({
-        ...turnState,
-        processing: { ...turnState.processing, roll: true },
+        ...rollState,
+        processing: { ...rollState.processing, roll: true },
       });
 
       await expect.element(orangeDie).toHaveAttribute("aria-pressed", "true");
       await expect.element(orangeDie).toBeDisabled();
     });
 
-    test("uses server rolled dice after roll and starts the next turn empty", async () => {
+    test("uses server rolled dice after roll and starts the next roll phase empty", async () => {
       sessionMock.set(
         sessionState
           .transient({
-            game: { phase: "turn", cursor: 0 },
-            permissions: { can_select_dice: true, can_roll: true },
+            game: { phase: "roll", cursor: 0 },
+            permissions: { can_roll: true },
           })
           .build(),
       );
@@ -174,13 +174,13 @@ describe("Game", () => {
         sessionState
           .transient({
             game: {
-              phase: "decision",
+              phase: "write_or_pass",
               cursor: 0,
               dices: { orange: 2, yellow: 5 },
               sum: 7,
               attempt: 1,
             },
-            permissions: { can_see_result: true },
+            permissions: { can_see_roll: true },
           })
           .build(),
       );
@@ -189,7 +189,7 @@ describe("Game", () => {
       await expect.element(yellowDie).toHaveAttribute("aria-pressed", "true");
       await expect.element(screen.getByLabelText("Rolled sum 7")).toBeVisible();
 
-      sessionMock.set(sessionState.transient({ game: { phase: "turn", cursor: 1 } }).build());
+      sessionMock.set(sessionState.transient({ game: { phase: "roll", cursor: 1 } }).build());
 
       await expect.element(orangeDie).toHaveAttribute("aria-pressed", "false");
       await expect.element(yellowDie).toHaveAttribute("aria-pressed", "false");
@@ -200,22 +200,22 @@ describe("Game", () => {
     });
   });
 
-  describe("decision phase", () => {
+  describe("write/pass phase", () => {
     test("after first roll shows rolled dice and active response controls", async () => {
       sessionMock.set(
         sessionState
           .transient({
             game: {
-              phase: "decision",
+              phase: "write_or_pass",
               dices: { orange: 4, purple: 5 },
               sum: 9,
               attempt: 1,
             },
             permissions: {
               can_reroll: true,
-              can_see_result: true,
-              can_write_result: true,
-              can_take_penalty: true,
+              can_see_roll: true,
+              can_write: true,
+              can_penalize: true,
             },
             session: {
               available_slots: [
@@ -271,7 +271,7 @@ describe("Game", () => {
       await rerollButton.click();
 
       expect(sessionMock.actions.write).toHaveBeenCalledWith({ row: "orange", slot: 0 });
-      expect(sessionMock.actions.takePenalty).toHaveBeenCalledTimes(1);
+      expect(sessionMock.actions.penalize).toHaveBeenCalledTimes(1);
       expect(sessionMock.actions.reroll).toHaveBeenCalledTimes(1);
     });
 
@@ -280,7 +280,7 @@ describe("Game", () => {
         sessionState
           .transient({
             game: {
-              phase: "decision",
+              phase: "write_or_pass",
               dices: { orange: 4 },
               sum: 4,
               attempt: 1,
@@ -300,12 +300,12 @@ describe("Game", () => {
         sessionState
           .transient({
             game: {
-              phase: "decision",
+              phase: "write_or_pass",
               dices: { orange: 4 },
               sum: 4,
               attempt: 2,
             },
-            permissions: { can_see_result: true },
+            permissions: { can_see_roll: true },
           })
           .build(),
       );
@@ -329,22 +329,21 @@ describe("Game", () => {
         sessionState
           .transient({
             game: {
-              phase: "decision",
+              phase: "write_or_pass",
               dices: { yellow: 6 },
               sum: 6,
               attempt: 1,
             },
-            permissions: { can_see_result: true, can_write_result: true },
+            permissions: { can_see_roll: true, can_write: true },
             session: { available_slots: [{ row: "yellow", slot: 0 }] },
           })
           .build({
             processing: {
               roll: false,
-              keep: false,
               reroll: false,
               write: true,
-              skip: false,
-              takePenalty: false,
+              pass: false,
+              penalize: false,
             },
           }),
       );
@@ -363,27 +362,26 @@ describe("Game", () => {
         sessionState
           .transient({
             game: {
-              phase: "decision",
+              phase: "write_or_pass",
               dices: { orange: 3 },
               sum: 3,
               attempt: 1,
             },
             permissions: {
               can_reroll: true,
-              can_see_result: true,
-              can_write_result: true,
-              can_take_penalty: true,
+              can_see_roll: true,
+              can_write: true,
+              can_penalize: true,
             },
           })
           .build({
             status: "stale",
             errors: {
               roll: null,
-              keep: null,
               reroll: { reason: "rejected" },
               write: null,
-              skip: null,
-              takePenalty: null,
+              pass: null,
+              penalize: null,
             },
           }),
       );
@@ -400,17 +398,17 @@ describe("Game", () => {
       await expect.element(screen.getByText("rejected")).toBeVisible();
     });
 
-    test("hides confirmation controls when permissions deny decision actions", async () => {
+    test("hides confirmation controls when permissions deny choice actions", async () => {
       sessionMock.set(
         sessionState
           .transient({
             game: {
-              phase: "decision",
+              phase: "write_or_pass",
               dices: { purple: 2 },
               sum: 2,
               attempt: 1,
             },
-            permissions: { can_see_result: true },
+            permissions: { can_see_roll: true },
           })
           .build(),
       );
@@ -434,7 +432,7 @@ describe("Game", () => {
         sessionState
           .transient({
             game: {
-              phase: "decision",
+              phase: "write_or_pass",
               dices: { orange: 3 },
               sum: 3,
               attempt: 1,
@@ -456,7 +454,7 @@ describe("Game", () => {
         sessionState
           .transient({
             game: {
-              phase: "decision",
+              phase: "write_or_pass",
               dices: { purple: 2 },
               sum: 2,
               attempt: 1,
@@ -465,19 +463,17 @@ describe("Game", () => {
           .build({
             errors: {
               roll: { reason: "" },
-              keep: { reason: "rejected" },
               reroll: null,
-              write: null,
-              skip: null,
-              takePenalty: null,
+              write: { reason: "rejected" },
+              pass: null,
+              penalize: null,
             },
             timeouts: {
               roll: false,
-              keep: true,
               reroll: false,
-              write: false,
-              skip: false,
-              takePenalty: false,
+              write: true,
+              pass: false,
+              penalize: false,
             },
           }),
       );
@@ -494,7 +490,7 @@ describe("Game", () => {
         sessionState
           .transient({
             game: {
-              phase: "decision",
+              phase: "write_or_pass",
               dices: { yellow: 1 },
               sum: 1,
               attempt: 1,
@@ -503,24 +499,23 @@ describe("Game", () => {
           .build({
             timeouts: {
               roll: false,
-              keep: true,
               reroll: true,
-              write: false,
-              skip: false,
-              takePenalty: false,
+              write: true,
+              pass: false,
+              penalize: false,
             },
           }),
       );
 
       const screen = await render(App);
 
-      await expect.element(screen.getByText("keep timeout")).toBeVisible();
-      await expect.element(screen.getByText("reroll timeout")).not.toBeInTheDocument();
+      await expect.element(screen.getByText("reroll timeout")).toBeVisible();
+      await expect.element(screen.getByText("write timeout")).not.toBeInTheDocument();
     });
   });
 
   describe("result phase", () => {
-    test("preserves roll details without decision controls", async () => {
+    test("preserves roll details without choice controls", async () => {
       sessionMock.set(
         sessionState
           .transient({
@@ -530,7 +525,7 @@ describe("Game", () => {
               sum: 6,
               attempt: 2,
             },
-            permissions: { can_see_result: true },
+            permissions: { can_see_roll: true },
           })
           .build(),
       );
@@ -568,7 +563,7 @@ describe("Game", () => {
               sum: 9,
               attempt: 2,
             },
-            permissions: { can_see_result: true, can_write_result: true, can_pass_result: true },
+            permissions: { can_see_roll: true, can_write: true, can_pass: true },
             session: {
               available_slots: [
                 { row: "orange", slot: 0 },
@@ -595,7 +590,7 @@ describe("Game", () => {
       await passButton.click();
       await confirmButton.click();
 
-      expect(sessionMock.actions.skip).toHaveBeenCalledTimes(1);
+      expect(sessionMock.actions.pass).toHaveBeenCalledTimes(1);
       expect(sessionMock.actions.write).toHaveBeenCalledWith({ row: "purple", slot: 8 });
     });
 
@@ -609,7 +604,7 @@ describe("Game", () => {
               sum: 6,
               attempt: 1,
             },
-            permissions: { can_see_result: true, can_pass_result: true },
+            permissions: { can_see_roll: true, can_pass: true },
           })
           .build(),
       );

@@ -20,11 +20,11 @@
 
   let selectedDice: DieColor[] = $derived(dice.filter((color) => game?.dices[color] !== undefined));
 
-  const canSeeResult = $derived($permissions.can_see_result);
+  const canSeeRoll = $derived($permissions.can_see_roll);
   const channelReady = $derived($session.status === "ready");
 
   const diceSelectionDisabled = $derived(
-    !channelReady || !$permissions.can_select_dice || $session.processing.roll,
+    !channelReady || !$permissions.can_roll || $session.processing.roll,
   );
 
   const selectedAvailableSlot = $derived.by(() => {
@@ -37,10 +37,10 @@
     const availableSlots = $session.value?.available_slots ?? [];
     return availableSlots.find((slot) => sameSlot(slot, slotSelection)) ?? null;
   });
-  const confirmVisible = $derived($permissions.can_write_result);
+  const confirmVisible = $derived($permissions.can_write);
   const confirmDisabled = $derived(
     !channelReady ||
-      !$permissions.can_write_result ||
+      !$permissions.can_write ||
       selectedAvailableSlot === null ||
       $session.processing.write,
   );
@@ -48,13 +48,13 @@
   const rerollDisabled = $derived(
     !channelReady || !$permissions.can_reroll || $session.processing.reroll,
   );
-  const cancelVisible = $derived($permissions.can_take_penalty);
+  const cancelVisible = $derived($permissions.can_penalize);
   const cancelDisabled = $derived(
-    !channelReady || !$permissions.can_take_penalty || $session.processing.takePenalty,
+    !channelReady || !$permissions.can_penalize || $session.processing.penalize,
   );
-  const passVisible = $derived($permissions.can_pass_result && !$permissions.can_take_penalty);
+  const passVisible = $derived($permissions.can_pass && !$permissions.can_penalize);
   const passDisabled = $derived(
-    !channelReady || !$permissions.can_pass_result || $session.processing.skip,
+    !channelReady || !$permissions.can_pass || $session.processing.pass,
   );
   const actionBarVisible = $derived(
     rerollVisible || cancelVisible || confirmVisible || passVisible,
@@ -102,11 +102,11 @@
   }
 
   function cancel() {
-    session.takePenalty();
+    session.penalize();
   }
 
   function pass() {
-    session.skip();
+    session.pass();
   }
 </script>
 
@@ -150,23 +150,23 @@
 
           <button
             class="die die--{color}"
-            class:die--selected={$permissions.can_select_dice && selected}
-            class:die--locked={canSeeResult && selected}
-            class:die--inactive={canSeeResult && !selected}
+            class:die--selected={$permissions.can_roll && selected}
+            class:die--locked={canSeeRoll && selected}
+            class:die--inactive={canSeeRoll && !selected}
             type="button"
             aria-label="{color} die"
-            aria-pressed={($permissions.can_select_dice || canSeeResult) && selected}
+            aria-pressed={($permissions.can_roll || canSeeRoll) && selected}
             disabled={diceSelectionDisabled}
             onclick={() => toggleDie(color)}
           >
-            {#if canSeeResult}
+            {#if canSeeRoll}
               <span class="die-value">{value}</span>
             {/if}
           </button>
         {/each}
       </div>
 
-      {#if game?.phase === "turn"}
+      {#if game?.phase === "roll"}
         <button
           class="roll-button"
           type="button"
@@ -176,7 +176,7 @@
         >
           roll
         </button>
-      {:else if canSeeResult && game?.sum}
+      {:else if canSeeRoll && game?.sum}
         <div class="sum-token" aria-label="Rolled sum {game.sum}">
           {game.sum}
         </div>

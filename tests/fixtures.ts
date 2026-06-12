@@ -32,7 +32,7 @@ export const player = Factory.define<Player>(() => ({
 }));
 
 export const game = Factory.define<Game>(() => ({
-  phase: "turn",
+  phase: "roll",
   order: ["alice", "bob"],
   cursor: 0,
   players: {
@@ -47,14 +47,12 @@ export const game = Factory.define<Game>(() => ({
 
 export const permissions = Factory.define<Permissions>(() => ({
   can_start_game: false,
-  can_select_dice: false,
   can_roll: false,
-  can_keep: false,
   can_reroll: false,
-  can_see_result: false,
-  can_write_result: false,
-  can_pass_result: false,
-  can_take_penalty: false,
+  can_see_roll: false,
+  can_write: false,
+  can_pass: false,
+  can_penalize: false,
 }));
 
 export const session = Factory.define<Session, SessionOverrides>(({ transientParams }) => {
@@ -78,27 +76,24 @@ export const sessionState = Factory.define<SessionState, SessionOverrides>(
     error: null,
     processing: {
       roll: false,
-      keep: false,
       reroll: false,
       write: false,
-      skip: false,
-      takePenalty: false,
+      pass: false,
+      penalize: false,
     },
     errors: {
       roll: null,
-      keep: null,
       reroll: null,
       write: null,
-      skip: null,
-      takePenalty: null,
+      pass: null,
+      penalize: null,
     },
     timeouts: {
       roll: false,
-      keep: false,
       reroll: false,
       write: false,
-      skip: false,
-      takePenalty: false,
+      pass: false,
+      penalize: false,
     },
   }),
 );

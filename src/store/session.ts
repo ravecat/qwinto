@@ -2,7 +2,7 @@ import { shell } from "@rvct/d20sdk";
 
 export type DieColor = "orange" | "yellow" | "purple";
 export type Dice = Partial<Record<DieColor, number>>;
-export type GamePhase = "setup" | "ready" | "turn" | "decision" | "result" | "finished";
+export type GamePhase = "setup" | "ready" | "roll" | "write_or_pass" | "result" | "finished";
 export type SessionPhase = "waiting_for_players" | "in_progress" | "finished";
 export type PlayerStatus = "ready" | "wrote" | "failed" | "passed";
 
@@ -33,14 +33,12 @@ export type Score = {
 
 export type Permissions = {
   can_start_game: boolean;
-  can_select_dice: boolean;
   can_roll: boolean;
-  can_keep: boolean;
   can_reroll: boolean;
-  can_see_result: boolean;
-  can_write_result: boolean;
-  can_pass_result: boolean;
-  can_take_penalty: boolean;
+  can_see_roll: boolean;
+  can_write: boolean;
+  can_pass: boolean;
+  can_penalize: boolean;
 };
 
 export type Game = {
@@ -91,10 +89,6 @@ export const session = runtime.session.extend(({ call }) => ({
     return call<EmptyOk, ActionError>("roll", payload);
   },
 
-  keep() {
-    return call<EmptyOk, ActionError>("keep", {});
-  },
-
   reroll() {
     return call<EmptyOk, ActionError>("reroll", {});
   },
@@ -103,12 +97,12 @@ export const session = runtime.session.extend(({ call }) => ({
     return call<EmptyOk, ActionError>("write", payload);
   },
 
-  skip() {
-    return call<EmptyOk, ActionError>("skip", {});
+  pass() {
+    return call<EmptyOk, ActionError>("pass", {});
   },
 
-  takePenalty() {
-    return call<EmptyOk, ActionError>("take_penalty", {});
+  penalize() {
+    return call<EmptyOk, ActionError>("penalize", {});
   },
 }));
 
