@@ -2,12 +2,7 @@
   import Board from "~components/board.svelte";
   import permissions from "~store/permissions";
   import { selectedSlot } from "~store/overlay.svelte";
-  import {
-    actionErrorMessage,
-    type DieColor,
-    session,
-    timeoutErrorMessage,
-  } from "~store/session";
+  import { actionErrorMessage, type DieColor, session, timeoutErrorMessage } from "~store/session";
 
   const dice: DieColor[] = ["orange", "yellow", "purple"];
 
@@ -20,40 +15,25 @@
   let selectedDice: DieColor[] = $derived(dice.filter((color) => game?.dices[color] !== undefined));
 
   const canSeeRoll = $derived($permissions.can_see_roll);
-  const channelReady = $derived($session.status === "ready");
 
-  const diceSelectionDisabled = $derived(
-    !channelReady || !$permissions.can_roll || $session.processing.roll,
-  );
+  const diceSelectionDisabled = $derived(!$permissions.can_roll || $session.processing.roll);
 
   const confirmVisible = $derived($permissions.can_write);
   const confirmDisabled = $derived(
-    !channelReady ||
-      !$permissions.can_write ||
-      selectedSlot.value === null ||
-      $session.processing.write,
+    !$permissions.can_write || selectedSlot.value === null || $session.processing.write,
   );
   const rerollVisible = $derived($permissions.can_reroll);
-  const rerollDisabled = $derived(
-    !channelReady || !$permissions.can_reroll || $session.processing.reroll,
-  );
+  const rerollDisabled = $derived(!$permissions.can_reroll || $session.processing.reroll);
   const cancelVisible = $derived($permissions.can_penalize);
-  const cancelDisabled = $derived(
-    !channelReady || !$permissions.can_penalize || $session.processing.penalize,
-  );
+  const cancelDisabled = $derived(!$permissions.can_penalize || $session.processing.penalize);
   const passVisible = $derived($permissions.can_pass && !$permissions.can_penalize);
-  const passDisabled = $derived(
-    !channelReady || !$permissions.can_pass || $session.processing.pass,
-  );
+  const passDisabled = $derived(!$permissions.can_pass || $session.processing.pass);
   const actionBarVisible = $derived(
     rerollVisible || cancelVisible || confirmVisible || passVisible,
   );
 
   const rollDisabled = $derived(
-    !channelReady ||
-      !$permissions.can_roll ||
-      selectedDice.length === 0 ||
-      $session.processing.roll,
+    !$permissions.can_roll || selectedDice.length === 0 || $session.processing.roll,
   );
 
   const actionError = $derived(actionErrorMessage($session));

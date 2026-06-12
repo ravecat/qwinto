@@ -358,7 +358,7 @@ describe("Game", () => {
         .toBeDisabled();
     });
 
-    test("disables controls while the session is not ready and action errors are visible", async () => {
+    test("keeps controls enabled while the session is not ready and action errors are visible", async () => {
       sessionMock.set(
         sessionState
           .transient({
@@ -374,6 +374,7 @@ describe("Game", () => {
               can_write: true,
               can_penalize: true,
             },
+            session: { available_slots: [{ row: "orange", slot: 0 }] },
           })
           .build({
             status: "stale",
@@ -389,13 +390,14 @@ describe("Game", () => {
 
       const screen = await render(App);
 
-      await expect.element(screen.getByRole("button", { name: "Reroll same dice" })).toBeDisabled();
+      await expect.element(screen.getByRole("button", { name: "Reroll same dice" })).toBeEnabled();
       await expect
         .element(screen.getByRole("button", { name: "Cancel roll and take penalty" }))
-        .toBeDisabled();
+        .toBeEnabled();
+      await screen.getByRole("button", { name: "Select orange slot 1" }).click();
       await expect
         .element(screen.getByRole("button", { name: "Confirm selected cell" }))
-        .toBeDisabled();
+        .toBeEnabled();
       await expect.element(screen.getByText("rejected")).toBeVisible();
     });
 
