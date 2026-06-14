@@ -382,11 +382,11 @@
   }
 
   .die--orange {
-    background: #be2121;
+    background: #d9651e;
   }
 
   .die--yellow {
-    background: #d7b326;
+    background: #e2bd2f;
   }
 
   .die--purple {
@@ -466,6 +466,7 @@
     grid-column: 1 / -1;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: clamp(0.5rem, 1.6vmin, 0.85rem);
+    border-block-start: 0.08rem solid #eef0f4;
     width: 100%;
   }
 
