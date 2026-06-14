@@ -60,6 +60,7 @@ export const session = Factory.define<Session, SessionOverrides>(({ transientPar
 
   return {
     id: "session-test",
+    self: "alice",
     phase: "in_progress",
     owner_id: "alice",
     members,

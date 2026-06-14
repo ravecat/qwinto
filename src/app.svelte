@@ -1,7 +1,7 @@
 <script lang="ts">
   import Board from "~components/board.svelte";
   import permissions from "~store/permissions";
-  import { selectedSlot } from "~store/overlay.svelte";
+  import { selectedSlot, visiblePlayerId } from "~store/overlay.svelte";
   import { actionErrorMessage, type DieColor, session, timeoutErrorMessage } from "~store/session";
 
   const game = $derived($session.value?.game ?? null);
@@ -9,10 +9,10 @@
   let dice = $derived(Object.keys(game?.dices ?? {}) as DieColor[]);
 
   const members = $derived.by(() => {
-    return Object.entries($session.value?.members ?? {}).map(([id, member]) => {
+    return Object.entries($session.value?.members ?? {}).map(([id, member], index) => {
       return {
         id,
-        label: member.display_name?.trim(),
+        label: member.display_name?.trim() || `Player ${index + 1}`,
         avatar: member.avatar,
         active: id === game?.order[game.cursor],
       };
@@ -20,7 +20,7 @@
   });
 
   const canSeeRoll = $derived($permissions.can_see_roll && Boolean(game?.sum));
-  const canRoll = $derived($permissions.can_roll);
+  const canRoll = $derived($permissions.can_roll && !$session.processing.roll);
   const canWrite = $derived($permissions.can_write);
   const canReroll = $derived($permissions.can_reroll);
   const canPenalize = $derived($permissions.can_penalize);
@@ -53,31 +53,41 @@
 
 <main class="game">
   <div class="play-surface">
-    <ul class="side-panel side-panel--participants" aria-label="Participants">
+    <fieldset class="side-panel side-panel--participants" aria-label="Participants">
       {#each members as member (member.id)}
-        <li
+        <label
           class="participant-slot participant-slot--occupied"
           class:participant-slot--active={member.active}
-          aria-current={member.active ? "true" : undefined}
-          aria-label={member.label}
         >
-          {#if member.avatar}
-            <img
-              class="participant-avatar"
-              src={member.avatar}
-              alt=""
-              loading="eager"
-              decoding="async"
-              referrerpolicy="no-referrer"
-            />
-          {:else}
-            <span class="participant-initial" aria-hidden="true">
-              {member.label?.charAt(0).toUpperCase()}
-            </span>
-          {/if}
-        </li>
+          <input
+            class="participant-radio"
+            type="radio"
+            name="visible-player"
+            bind:group={visiblePlayerId.value}
+            value={member.id}
+            aria-label="Show {member.label} sheet"
+            aria-current={member.active ? "true" : undefined}
+          />
+
+          <span class="participant-face" aria-hidden="true">
+            {#if member.avatar}
+              <img
+                class="participant-avatar"
+                src={member.avatar}
+                alt=""
+                loading="eager"
+                decoding="async"
+                referrerpolicy="no-referrer"
+              />
+            {:else}
+              <span class="participant-initial" aria-hidden="true">
+                {member.label.charAt(0).toUpperCase()}
+              </span>
+            {/if}
+          </span>
+        </label>
       {/each}
-    </ul>
+    </fieldset>
 
     <div class="board-frame">
       <Board />
@@ -88,7 +98,7 @@
         class="dice-stack"
         class:dice-stack--can-roll={canRoll}
         class:dice-stack--can-see-roll={canSeeRoll}
-        disabled={!canRoll || $session.processing.roll}
+        disabled={!canRoll}
         aria-label="Dice"
       >
         {#each ["orange", "yellow", "purple"] as const satisfies readonly DieColor[] as color (color)}
@@ -116,7 +126,7 @@
           class="roll-button"
           type="button"
           aria-label="Roll selected dice"
-          disabled={!canRoll || dice.length === 0 || $session.processing.roll}
+          disabled={!canRoll || dice.length === 0}
           onclick={roll}
         >
           Roll
@@ -251,22 +261,48 @@
   }
 
   .participant-slot {
+    position: relative;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+  }
+
+  .participant-radio {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    border-radius: 999rem;
+    margin: 0;
+    cursor: pointer;
+    opacity: 0;
+  }
+
+  .participant-face {
     display: grid;
     place-items: center;
     overflow: hidden;
+    grid-area: 1 / 1;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
     border: 0.12rem solid #858585;
     border-radius: 999rem;
     background: #ffffff;
+    pointer-events: none;
     box-shadow:
       inset 0 0.12rem 0.18rem rgb(255 255 255 / 0.7),
       inset 0 -0.12rem 0.24rem rgb(0 0 0 / 0.1);
   }
 
-  .participant-slot--occupied {
+  .participant-slot--occupied .participant-face {
     background: #eef0f4;
   }
 
-  .participant-slot--active {
+  .participant-slot--active .participant-face {
     border-color: #2f6fed;
     outline: 0.18rem solid rgb(47 111 237 / 0.28);
     outline-offset: 0.1rem;
@@ -275,6 +311,17 @@
       0 0 0 0.34rem rgb(47 111 237 / 0.12),
       inset 0 0.12rem 0.18rem rgb(255 255 255 / 0.7),
       inset 0 -0.12rem 0.24rem rgb(0 0 0 / 0.1);
+  }
+
+  .participant-slot:not(.participant-slot--active) .participant-radio:checked + .participant-face {
+    border-color: #111827;
+    outline: 0.16rem solid rgb(17 24 39 / 0.18);
+    outline-offset: 0.08rem;
+  }
+
+  .participant-radio:focus-visible + .participant-face {
+    outline: 0.16rem solid #111827;
+    outline-offset: -0.24rem;
   }
 
   .participant-avatar {

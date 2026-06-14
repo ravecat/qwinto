@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { render } from "vitest-browser-svelte";
 import App from "~/app.svelte";
-import { clearSelectedSlot } from "~store/overlay.svelte";
-import { sessionState } from "../fixtures";
+import { selectedSlot, visiblePlayerId } from "~store/overlay.svelte";
+import { player, sessionState } from "../fixtures";
 
 const sessionMock = await vi.hoisted(async () => {
   const { createSessionMock } = await import("../mocks/session");
@@ -25,14 +25,20 @@ function boardCell(row: string, slot: number) {
 }
 
 function boardCellRing(row: string, slot: number) {
-  const ring = boardCell(row, slot)?.firstElementChild;
+  const ring = boardCell(row, slot)?.querySelector(".slot-available-ring");
   return ring?.tagName.toLowerCase() === "rect" ? ring : null;
+}
+
+function boardCellValue(row: string, slot: number) {
+  const value = boardCell(row, slot)?.querySelector(".slot-value");
+  return value?.tagName.toLowerCase() === "text" ? value : null;
 }
 
 describe("Game", () => {
   beforeEach(() => {
     sessionMock.reset();
-    clearSelectedSlot();
+    selectedSlot.value = null;
+    visiblePlayerId.value = null;
   });
 
   describe("roll phase", () => {
@@ -41,13 +47,15 @@ describe("Game", () => {
 
       const screen = await render(App);
 
-      await expect.element(screen.getByRole("list", { name: "Participants" })).toBeVisible();
+      await expect.element(screen.getByRole("group", { name: "Participants" })).toBeVisible();
       await expect
-        .element(screen.getByRole("listitem", { name: "Alice" }))
+        .element(screen.getByRole("radio", { name: "Show Alice sheet" }))
         .not.toHaveAttribute("aria-current", "true");
+      await expect.element(screen.getByRole("radio", { name: "Show Alice sheet" })).toBeChecked();
       await expect
-        .element(screen.getByRole("listitem", { name: "Bob" }))
+        .element(screen.getByRole("radio", { name: "Show Bob sheet" }))
         .toHaveAttribute("aria-current", "true");
+      await expect.element(screen.getByRole("radio", { name: "Show Bob sheet" })).not.toBeChecked();
     });
 
     test("lets the active player choose dice and roll", async () => {
@@ -133,6 +141,9 @@ describe("Game", () => {
 
       const screen = await render(App);
       const orangeDie = screen.getByRole("checkbox", { name: "orange die" });
+      const rollButton = screen.getByRole("button", {
+        name: "Roll selected dice",
+      });
 
       await orangeDie.click();
 
@@ -145,6 +156,7 @@ describe("Game", () => {
 
       await expect.element(orangeDie).toBeChecked();
       await expect.element(orangeDie).toBeDisabled();
+      await expect.element(rollButton).toBeDisabled();
     });
 
     test("uses server rolled dice after roll and starts the next roll phase empty", async () => {
@@ -196,7 +208,7 @@ describe("Game", () => {
       await expect.element(yellowDie).not.toBeChecked();
       await expect.element(rollButton).toBeDisabled();
       await expect
-        .element(screen.getByRole("listitem", { name: "Bob" }))
+        .element(screen.getByRole("radio", { name: "Show Bob sheet" }))
         .toHaveAttribute("aria-current", "true");
     });
   });
@@ -518,6 +530,130 @@ describe("Game", () => {
   });
 
   describe("result phase", () => {
+    test("renders self score-sheet values in their board slots", async () => {
+      sessionMock.set(
+        sessionState
+          .transient({
+            game: {
+              phase: "result",
+              players: {
+                alice: player.build({
+                  rows: {
+                    orange: { 0: 3 },
+                    yellow: { 2: 6 },
+                    purple: { 8: 9 },
+                  },
+                }),
+                bob: player.build(),
+              },
+            },
+          })
+          .build(),
+      );
+
+      await render(App);
+
+      expect(boardCellValue("orange", 0)?.textContent).toBe("3");
+      expect(boardCellValue("yellow", 2)?.textContent).toBe("6");
+      expect(boardCellValue("purple", 8)?.textContent).toBe("9");
+      expect(boardCellValue("orange", 1)).toBeNull();
+    });
+
+    test("uses self instead of guessing from active player rows", async () => {
+      sessionMock.set(
+        sessionState
+          .transient({
+            game: {
+              phase: "result",
+              cursor: 0,
+              players: {
+                alice: player.build({
+                  rows: {
+                    orange: { 0: 4 },
+                    yellow: {},
+                    purple: {},
+                  },
+                }),
+                bob: player.build({
+                  rows: {
+                    orange: {},
+                    yellow: { 2: 7 },
+                    purple: {},
+                  },
+                }),
+              },
+            },
+            session: {
+              self: "bob",
+            },
+          })
+          .build(),
+      );
+
+      await render(App);
+
+      expect(boardCellValue("orange", 0)).toBeNull();
+      expect(boardCellValue("yellow", 2)?.textContent).toBe("7");
+    });
+
+    test("preserves selected own slot while viewing another player sheet", async () => {
+      sessionMock.set(
+        sessionState
+          .transient({
+            game: {
+              phase: "result",
+              players: {
+                alice: player.build({
+                  rows: {
+                    orange: { 0: 3 },
+                    yellow: {},
+                    purple: {},
+                  },
+                }),
+                bob: player.build({
+                  rows: {
+                    orange: {},
+                    yellow: { 2: 7 },
+                    purple: {},
+                  },
+                }),
+              },
+            },
+            permissions: { can_write: true },
+            session: {
+              available_slots: [{ row: "orange", slot: 1 }],
+            },
+          })
+          .build(),
+      );
+
+      const screen = await render(App);
+
+      expect(boardCellValue("orange", 0)?.textContent).toBe("3");
+      expect(boardCellRing("orange", 1)).not.toBeNull();
+
+      await screen.getByRole("button", { name: "Select orange slot 2" }).click();
+      await expect
+        .element(screen.getByRole("button", { name: "Confirm selected cell" }))
+        .toBeEnabled();
+
+      await screen.getByRole("radio", { name: "Show Bob sheet" }).click();
+
+      expect(boardCellValue("orange", 0)).toBeNull();
+      expect(boardCellValue("yellow", 2)?.textContent).toBe("7");
+      expect(boardCellRing("orange", 1)).toBeNull();
+      await expect
+        .element(screen.getByRole("button", { name: "Confirm selected cell" }))
+        .toBeEnabled();
+
+      await screen.getByRole("button", { name: "Confirm selected cell" }).click();
+
+      expect(sessionMock.actions.write).toHaveBeenCalledWith({
+        row: "orange",
+        slot: 1,
+      });
+    });
+
     test("preserves roll details without choice controls", async () => {
       sessionMock.set(
         sessionState

@@ -54,6 +54,7 @@ export type Game = {
 
 export type Session = {
   id: string;
+  self: string;
   phase: SessionPhase;
   owner_id: string;
   members: Record<string, Member>;

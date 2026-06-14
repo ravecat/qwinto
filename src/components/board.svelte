@@ -1,7 +1,7 @@
 <script lang="ts">
   import board from "~assets/board.svg";
   import permissions from "~store/permissions";
-  import { selectedSlot, selectSlot } from "~store/overlay.svelte";
+  import { selectedSlot, selectSlot, visiblePlayerId } from "~store/overlay.svelte";
   import { session, type Slot } from "~store/session";
 
   type BoardSlot = Slot & {
@@ -47,8 +47,14 @@
     { row: "purple", slot: 8, x: 418.663, y: 158.972 },
   ];
 
-  const canSelectSlot = $derived($permissions.can_write);
-  const availableSlots = $derived($session.value?.available_slots ?? []);
+  const game = $derived($session.value?.game ?? null);
+  const self = $derived($session.value?.self ?? null);
+  const sheetPlayerId = $derived(visiblePlayerId.value);
+  const isOwnSheet = $derived(sheetPlayerId === self);
+
+  const canSelectSlot = $derived(isOwnSheet && $permissions.can_write);
+  const availableSlots = $derived(isOwnSheet ? ($session.value?.available_slots ?? []) : []);
+  const sheet = $derived(sheetPlayerId ? (game?.players[sheetPlayerId]?.rows ?? null) : null);
 </script>
 
 <div class="board" role="group" aria-label="Qwinto game board">
@@ -68,6 +74,7 @@
         )}
         {@const selected =
           selectedSlot.value?.row === slot.row && selectedSlot.value.slot === slot.slot}
+        {@const value = sheet?.[slot.row]?.[slot.slot]}
 
         <g data-row={slot.row} data-slot={slot.slot}>
           {#if available}
@@ -81,6 +88,18 @@
               rx={slotRadius}
               ry={slotRadius}
             />
+          {/if}
+
+          {#if value !== undefined}
+            <text
+              class="slot-value"
+              x={slot.x + slotSize / 2}
+              y={slot.y + slotSize / 2}
+              text-anchor="middle"
+              dominant-baseline="central"
+            >
+              {value}
+            </text>
           {/if}
         </g>
       {/each}
@@ -147,6 +166,17 @@
 
   .slot-available-ring--selected {
     fill: rgb(47 111 237 / 0.18);
+  }
+
+  .slot-value {
+    fill: #111827;
+    stroke: #ffffff;
+    stroke-width: 2;
+    paint-order: stroke;
+    font-size: 1.45rem;
+    font-weight: 700;
+    pointer-events: none;
+    user-select: none;
   }
 
   .board-hit-layer {
