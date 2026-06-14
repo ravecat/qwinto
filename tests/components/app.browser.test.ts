@@ -61,22 +61,22 @@ describe("Game", () => {
       );
 
       const screen = await render(App);
-      const orangeDie = screen.getByRole("button", { name: "orange die" });
-      const yellowDie = screen.getByRole("button", { name: "yellow die" });
-      const purpleDie = screen.getByRole("button", { name: "purple die" });
+      const orangeDie = screen.getByRole("checkbox", { name: "orange die" });
+      const yellowDie = screen.getByRole("checkbox", { name: "yellow die" });
+      const purpleDie = screen.getByRole("checkbox", { name: "purple die" });
       const rollButton = screen.getByRole("button", {
         name: "Roll selected dice",
       });
 
       await expect.element(rollButton).toBeDisabled();
-      await expect.element(orangeDie).toHaveAttribute("aria-pressed", "false");
+      await expect.element(orangeDie).not.toBeChecked();
 
       await orangeDie.click();
       await yellowDie.click();
 
-      await expect.element(orangeDie).toHaveAttribute("aria-pressed", "true");
-      await expect.element(yellowDie).toHaveAttribute("aria-pressed", "true");
-      await expect.element(purpleDie).toHaveAttribute("aria-pressed", "false");
+      await expect.element(orangeDie).toBeChecked();
+      await expect.element(yellowDie).toBeChecked();
+      await expect.element(purpleDie).not.toBeChecked();
       await expect.element(rollButton).toBeEnabled();
 
       await rollButton.click();
@@ -90,14 +90,14 @@ describe("Game", () => {
       sessionMock.set(sessionState.transient({ game: { phase: "roll" } }).build());
 
       const screen = await render(App);
-      const orangeDie = screen.getByRole("button", { name: "orange die" });
+      const orangeDie = screen.getByRole("checkbox", { name: "orange die" });
       const rollButton = screen.getByRole("button", {
         name: "Roll selected dice",
       });
 
       await expect.element(orangeDie).toBeDisabled();
       await expect.element(rollButton).toBeDisabled();
-      await expect.element(orangeDie).toHaveAttribute("aria-pressed", "false");
+      await expect.element(orangeDie).not.toBeChecked();
     });
 
     test("disables dice selection outside roll when permissions deny it", async () => {
@@ -116,10 +116,10 @@ describe("Game", () => {
       );
 
       const screen = await render(App);
-      const orangeDie = screen.getByRole("button", { name: "orange die" });
+      const orangeDie = screen.getByRole("checkbox", { name: "orange die" });
 
       await expect.element(orangeDie).toBeDisabled();
-      await expect.element(orangeDie).toHaveAttribute("aria-pressed", "true");
+      await expect.element(orangeDie).toBeChecked();
     });
 
     test("preserves local dice choice across roll processing updates", async () => {
@@ -132,18 +132,18 @@ describe("Game", () => {
       sessionMock.set(rollState);
 
       const screen = await render(App);
-      const orangeDie = screen.getByRole("button", { name: "orange die" });
+      const orangeDie = screen.getByRole("checkbox", { name: "orange die" });
 
       await orangeDie.click();
 
-      await expect.element(orangeDie).toHaveAttribute("aria-pressed", "true");
+      await expect.element(orangeDie).toBeChecked();
 
       sessionMock.set({
         ...rollState,
         processing: { ...rollState.processing, roll: true },
       });
 
-      await expect.element(orangeDie).toHaveAttribute("aria-pressed", "true");
+      await expect.element(orangeDie).toBeChecked();
       await expect.element(orangeDie).toBeDisabled();
     });
 
@@ -158,8 +158,8 @@ describe("Game", () => {
       );
 
       const screen = await render(App);
-      const orangeDie = screen.getByRole("button", { name: "orange die" });
-      const yellowDie = screen.getByRole("button", { name: "yellow die" });
+      const orangeDie = screen.getByRole("checkbox", { name: "orange die" });
+      const yellowDie = screen.getByRole("checkbox", { name: "yellow die" });
       const rollButton = screen.getByRole("button", {
         name: "Roll selected dice",
       });
@@ -167,8 +167,8 @@ describe("Game", () => {
       await orangeDie.click();
       await yellowDie.click();
 
-      await expect.element(orangeDie).toHaveAttribute("aria-pressed", "true");
-      await expect.element(yellowDie).toHaveAttribute("aria-pressed", "true");
+      await expect.element(orangeDie).toBeChecked();
+      await expect.element(yellowDie).toBeChecked();
       await expect.element(rollButton).toBeEnabled();
 
       sessionMock.set(
@@ -186,14 +186,14 @@ describe("Game", () => {
           .build(),
       );
 
-      await expect.element(orangeDie).toHaveAttribute("aria-pressed", "true");
-      await expect.element(yellowDie).toHaveAttribute("aria-pressed", "true");
+      await expect.element(orangeDie).toBeChecked();
+      await expect.element(yellowDie).toBeChecked();
       await expect.element(screen.getByLabelText("Rolled sum 7")).toBeVisible();
 
       sessionMock.set(sessionState.transient({ game: { phase: "roll", cursor: 1 } }).build());
 
-      await expect.element(orangeDie).toHaveAttribute("aria-pressed", "false");
-      await expect.element(yellowDie).toHaveAttribute("aria-pressed", "false");
+      await expect.element(orangeDie).not.toBeChecked();
+      await expect.element(yellowDie).not.toBeChecked();
       await expect.element(rollButton).toBeDisabled();
       await expect
         .element(screen.getByRole("listitem", { name: "Bob" }))
@@ -229,9 +229,9 @@ describe("Game", () => {
       );
 
       const screen = await render(App);
-      const orangeDie = screen.getByRole("button", { name: "orange die" });
-      const yellowDie = screen.getByRole("button", { name: "yellow die" });
-      const purpleDie = screen.getByRole("button", { name: "purple die" });
+      const orangeDie = screen.getByRole("checkbox", { name: "orange die" });
+      const yellowDie = screen.getByRole("checkbox", { name: "yellow die" });
+      const purpleDie = screen.getByRole("checkbox", { name: "purple die" });
       const rerollButton = screen.getByRole("button", {
         name: "Reroll same dice",
       });
@@ -246,11 +246,11 @@ describe("Game", () => {
       await expect
         .element(screen.getByRole("button", { name: "Roll selected dice" }))
         .not.toBeInTheDocument();
-      await expect.element(orangeDie).toHaveAttribute("aria-pressed", "true");
-      await expect.element(yellowDie).toHaveAttribute("aria-pressed", "false");
-      await expect.element(purpleDie).toHaveAttribute("aria-pressed", "true");
-      await expect.element(orangeDie).toHaveTextContent("4");
-      await expect.element(purpleDie).toHaveTextContent("5");
+      await expect.element(orangeDie).toBeChecked();
+      await expect.element(yellowDie).not.toBeChecked();
+      await expect.element(purpleDie).toBeChecked();
+      await expect.element(screen.getByText("4")).toBeVisible();
+      await expect.element(screen.getByText("5")).toBeVisible();
       await expect.element(orangeDie).toBeDisabled();
       await expect.element(rerollButton).toBeEnabled();
       await expect.element(cancelButton).toBeEnabled();
@@ -430,7 +430,7 @@ describe("Game", () => {
         .not.toBeInTheDocument();
     });
 
-    test("hides rolled result evidence when permissions deny visibility", async () => {
+    test("hides rolled values and sum when permissions deny visibility", async () => {
       sessionMock.set(
         sessionState
           .transient({
@@ -445,11 +445,11 @@ describe("Game", () => {
       );
 
       const screen = await render(App);
-      const orangeDie = screen.getByRole("button", { name: "orange die" });
+      const orangeDie = screen.getByRole("checkbox", { name: "orange die" });
 
       await expect.element(screen.getByLabelText("Rolled sum 3")).not.toBeInTheDocument();
-      await expect.element(orangeDie).not.toHaveTextContent("3");
-      await expect.element(orangeDie).toHaveAttribute("aria-pressed", "false");
+      await expect.element(screen.getByText("3")).not.toBeInTheDocument();
+      await expect.element(orangeDie).toBeChecked();
     });
 
     test("shows action error before later errors and timeouts", async () => {
@@ -536,12 +536,8 @@ describe("Game", () => {
       const screen = await render(App);
 
       await expect.element(screen.getByLabelText("Rolled sum 6")).toBeVisible();
-      await expect
-        .element(screen.getByRole("button", { name: "yellow die" }))
-        .toHaveAttribute("aria-pressed", "true");
-      await expect
-        .element(screen.getByRole("button", { name: "orange die" }))
-        .toHaveAttribute("aria-pressed", "false");
+      await expect.element(screen.getByRole("checkbox", { name: "yellow die" })).toBeChecked();
+      await expect.element(screen.getByRole("checkbox", { name: "orange die" })).not.toBeChecked();
       await expect
         .element(screen.getByRole("button", { name: "Reroll same dice" }))
         .not.toBeInTheDocument();

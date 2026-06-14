@@ -4,57 +4,34 @@
   import { selectedSlot } from "~store/overlay.svelte";
   import { actionErrorMessage, type DieColor, session, timeoutErrorMessage } from "~store/session";
 
-  const dice: DieColor[] = ["orange", "yellow", "purple"];
-
   const game = $derived($session.value?.game ?? null);
 
-  const activeMemberId = $derived.by(() => {
-    return game?.order[game.cursor] ?? null;
+  let dice = $derived(Object.keys(game?.dices ?? {}) as DieColor[]);
+
+  const members = $derived.by(() => {
+    return Object.entries($session.value?.members ?? {}).map(([id, member]) => {
+      return {
+        id,
+        label: member.display_name?.trim(),
+        avatar: member.avatar,
+        active: id === game?.order[game.cursor],
+      };
+    });
   });
 
-  let selectedDice: DieColor[] = $derived(dice.filter((color) => game?.dices[color] !== undefined));
-
-  const canSeeRoll = $derived($permissions.can_see_roll);
-
-  const diceSelectionDisabled = $derived(!$permissions.can_roll || $session.processing.roll);
-
-  const confirmVisible = $derived($permissions.can_write);
-  const confirmDisabled = $derived(
-    !$permissions.can_write || selectedSlot.value === null || $session.processing.write,
-  );
-  const rerollVisible = $derived($permissions.can_reroll);
-  const rerollDisabled = $derived(!$permissions.can_reroll || $session.processing.reroll);
-  const cancelVisible = $derived($permissions.can_penalize);
-  const cancelDisabled = $derived(!$permissions.can_penalize || $session.processing.penalize);
-  const passVisible = $derived($permissions.can_pass && !$permissions.can_penalize);
-  const passDisabled = $derived(!$permissions.can_pass || $session.processing.pass);
-  const actionBarVisible = $derived(
-    rerollVisible || cancelVisible || confirmVisible || passVisible,
-  );
-
-  const rollDisabled = $derived(
-    !$permissions.can_roll || selectedDice.length === 0 || $session.processing.roll,
-  );
+  const canSeeRoll = $derived($permissions.can_see_roll && Boolean(game?.sum));
+  const canRoll = $derived($permissions.can_roll);
+  const canWrite = $derived($permissions.can_write);
+  const canReroll = $derived($permissions.can_reroll);
+  const canPenalize = $derived($permissions.can_penalize);
+  const canPass = $derived($permissions.can_pass);
+  const hasAvailableActions = $derived(canReroll || canPenalize || canWrite || canPass);
 
   const actionError = $derived(actionErrorMessage($session));
   const timeoutError = $derived(timeoutErrorMessage($session));
 
-  function rolledValue(color: DieColor) {
-    return game?.dices[color] ?? null;
-  }
-
-  function isDieSelected(color: DieColor) {
-    return selectedDice.includes(color);
-  }
-
-  function toggleDie(color: DieColor) {
-    selectedDice = isDieSelected(color)
-      ? selectedDice.filter((current) => current !== color)
-      : [...selectedDice, color];
-  }
-
   function roll() {
-    session.roll({ colors: selectedDice });
+    session.roll({ colors: dice });
   }
 
   function reroll() {
@@ -77,12 +54,12 @@
 <main class="game">
   <div class="play-surface">
     <ul class="side-panel side-panel--participants" aria-label="Participants">
-      {#each Object.entries($session.value?.members ?? {}) as [id, member] (id)}
+      {#each members as member (member.id)}
         <li
           class="participant-slot participant-slot--occupied"
-          class:participant-slot--active={id === activeMemberId}
-          aria-current={id === activeMemberId ? "true" : undefined}
-          aria-label={member.display_name || "Player"}
+          class:participant-slot--active={member.active}
+          aria-current={member.active ? "true" : undefined}
+          aria-label={member.label}
         >
           {#if member.avatar}
             <img
@@ -95,7 +72,7 @@
             />
           {:else}
             <span class="participant-initial" aria-hidden="true">
-              {(member.display_name || "Player").charAt(0).toUpperCase() || "?"}
+              {member.label?.charAt(0).toUpperCase()}
             </span>
           {/if}
         </li>
@@ -107,42 +84,46 @@
     </div>
 
     <div class="side-panel side-panel--dice">
-      <div class="dice-stack" aria-label="Dice">
-        {#each dice as color (color)}
-          {const selected = $derived(isDieSelected(color))}
-          {const value = $derived(rolledValue(color))}
+      <fieldset
+        class="dice-stack"
+        class:dice-stack--can-roll={canRoll}
+        class:dice-stack--can-see-roll={canSeeRoll}
+        disabled={!canRoll || $session.processing.roll}
+        aria-label="Dice"
+      >
+        {#each ["orange", "yellow", "purple"] as const satisfies readonly DieColor[] as color (color)}
+          <label class="die-option">
+            <input
+              class="die die--{color}"
+              type="checkbox"
+              name="dice"
+              bind:group={dice}
+              value={color}
+              aria-label="{color} die"
+            />
 
-          <button
-            class="die die--{color}"
-            class:die--selected={$permissions.can_roll && selected}
-            class:die--locked={canSeeRoll && selected}
-            class:die--inactive={canSeeRoll && !selected}
-            type="button"
-            aria-label="{color} die"
-            aria-pressed={($permissions.can_roll || canSeeRoll) && selected}
-            disabled={diceSelectionDisabled}
-            onclick={() => toggleDie(color)}
-          >
-            {#if canSeeRoll}
-              <span class="die-value">{value}</span>
+            {#if canSeeRoll && game?.dices[color]}
+              <span class="die-value" aria-hidden="true">
+                {game.dices[color]}
+              </span>
             {/if}
-          </button>
+          </label>
         {/each}
-      </div>
+      </fieldset>
 
       {#if game?.phase === "roll"}
         <button
           class="roll-button"
           type="button"
           aria-label="Roll selected dice"
-          disabled={rollDisabled}
+          disabled={!canRoll || dice.length === 0 || $session.processing.roll}
           onclick={roll}
         >
           Roll
         </button>
-      {:else if canSeeRoll && game?.sum}
-        <div class="sum-token" aria-label="Rolled sum {game.sum}">
-          {game.sum}
+      {:else if canSeeRoll}
+        <div class="sum-token" aria-label="Rolled sum {game?.sum}">
+          {game?.sum}
         </div>
       {/if}
 
@@ -157,48 +138,48 @@
       {/if}
     </div>
 
-    {#if actionBarVisible}
+    {#if hasAvailableActions}
       <div class="action-bar" aria-label="Result actions">
-        {#if rerollVisible}
+        {#if canReroll}
           <button
             class="action-button action-button--reroll"
             type="button"
             aria-label="Reroll same dice"
-            disabled={rerollDisabled}
+            disabled={$session.processing.reroll}
             onclick={reroll}
           >
             Reroll
           </button>
         {/if}
 
-        {#if cancelVisible}
+        {#if canPenalize}
           <button
             class="action-button action-button--cancel"
             type="button"
             aria-label="Cancel roll and take penalty"
-            disabled={cancelDisabled}
+            disabled={$session.processing.penalize}
             onclick={cancel}
           >
-            cancel
+            Cancel
           </button>
-        {:else if passVisible}
+        {:else if canPass}
           <button
             class="action-button action-button--pass"
             type="button"
             aria-label="Pass result"
-            disabled={passDisabled}
+            disabled={$session.processing.pass}
             onclick={pass}
           >
             pass
           </button>
         {/if}
 
-        {#if confirmVisible}
+        {#if canWrite}
           <button
             class="action-button action-button--confirm"
             type="button"
             aria-label="Confirm selected cell"
-            disabled={confirmDisabled}
+            disabled={selectedSlot.value === null || $session.processing.write}
             onclick={confirm}
           >
             Confirm
@@ -262,7 +243,7 @@
   }
 
   .participant-slot,
-  .die,
+  .die-option,
   .roll-button,
   .sum-token {
     width: min(100%, 3rem);
@@ -314,14 +295,30 @@
     justify-items: center;
     gap: inherit;
     width: 100%;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    margin: 0;
+  }
+
+  .die-option {
+    display: grid;
+    cursor: pointer;
   }
 
   .die {
+    grid-area: 1 / 1;
     display: grid;
-    position: relative;
     place-items: center;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    padding: 0;
     border: 0.12rem solid transparent;
     border-radius: 0.4rem;
+    margin: 0;
+    -webkit-appearance: none;
+    appearance: none;
     color: #ffffff;
     box-shadow:
       inset 0 0.12rem 0.18rem rgb(255 255 255 / 0.24),
@@ -349,23 +346,36 @@
     background: #5c437b;
   }
 
-  .die--selected {
+  .dice-stack--can-roll .die:checked {
     border-color: #ffffff;
     outline: 0.16rem solid #2f6fed;
     outline-offset: 0.1rem;
   }
 
-  .die--locked {
+  .dice-stack:not(.dice-stack--can-roll) .die:checked {
     border-color: #ffffff;
     outline: 0.16rem solid rgb(51 56 64 / 0.24);
     outline-offset: 0.1rem;
   }
 
-  .die--inactive {
+  .dice-stack--can-see-roll:not(.dice-stack--can-roll) .die:not(:checked) {
     opacity: 0.36;
   }
 
+  .die:focus-visible {
+    outline: 0.16rem solid #2f6fed;
+    outline-offset: 0.14rem;
+  }
+
   .die-value {
+    z-index: 1;
+    grid-area: 1 / 1;
+    place-self: center;
+    color: #ffffff;
+    font-size: clamp(1rem, 2.6vmin, 1.35rem);
+    font-weight: 800;
+    line-height: 1;
+    pointer-events: none;
     text-shadow: 0 0.08rem 0.1rem rgb(0 0 0 / 0.34);
   }
 
@@ -489,7 +499,7 @@
     }
 
     .participant-slot,
-    .die,
+    .die-option,
     .roll-button,
     .sum-token {
       width: min(100%, 2.15rem);
