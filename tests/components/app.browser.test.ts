@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { render } from "vitest-browser-svelte";
+import "~/app.css";
 import App from "~/app.svelte";
 import { selectedSlot, visiblePlayerId } from "~store/overlay.svelte";
 import { player, sessionState } from "../fixtures";
@@ -18,20 +19,14 @@ vi.mock("~store/session", async (importOriginal) => {
   };
 });
 
-function boardCell(row: string, slot: number) {
+function slot(row: string, col: number) {
   return document.querySelector(
-    `[aria-label="Qwinto game board"] [data-row="${row}"][data-slot="${slot}"]`,
+    `[aria-label="Qwinto game board"] [data-row="${row}"][data-col="${col}"]`,
   );
 }
 
-function boardCellRing(row: string, slot: number) {
-  const ring = boardCell(row, slot)?.querySelector(".slot-available-ring");
-  return ring?.tagName.toLowerCase() === "rect" ? ring : null;
-}
-
-function boardCellValue(row: string, slot: number) {
-  const value = boardCell(row, slot)?.querySelector(".slot-value");
-  return value?.tagName.toLowerCase() === "text" ? value : null;
+function penalty(index: number) {
+  return document.querySelector(`[aria-label="Qwinto game board"] [data-penalty="${index}"]`);
 }
 
 describe("Game", () => {
@@ -267,15 +262,15 @@ describe("Game", () => {
       await expect.element(rerollButton).toBeEnabled();
       await expect.element(cancelButton).toBeEnabled();
       await expect.element(confirmButton).toBeDisabled();
-      const orangeRing = boardCellRing("orange", 0);
+      const orangeRing = slot("orange", 0)?.querySelector("[data-slot-ring]");
       expect(orangeRing).not.toBeNull();
       for (const attribute of ["x", "y", "width", "height"]) {
         expect(orangeRing?.hasAttribute(attribute)).toBe(true);
       }
-      expect(boardCellRing("purple", 8)).not.toBeNull();
-      expect(boardCellRing("yellow", 0)).toBeNull();
+      expect(slot("purple", 8)?.querySelector("[data-slot-ring]")).not.toBeNull();
+      expect(slot("yellow", 0)?.querySelector("[data-slot-ring]")).toBeNull();
 
-      await screen.getByRole("button", { name: "Select orange slot 1" }).click();
+      await screen.getByRole("button", { name: "Select orange column 1" }).click();
 
       await expect.element(confirmButton).toBeEnabled();
 
@@ -286,6 +281,73 @@ describe("Game", () => {
       expect(sessionMock.actions.write).toHaveBeenCalledWith({ row: "orange", slot: 0 });
       expect(sessionMock.actions.penalize).toHaveBeenCalledTimes(1);
       expect(sessionMock.actions.reroll).toHaveBeenCalledTimes(1);
+    });
+
+    test("lays out the board, side panels, and equal action buttons without gaps", async () => {
+      sessionMock.set(
+        sessionState
+          .transient({
+            game: {
+              phase: "write_or_pass",
+              dices: { orange: 4, purple: 5 },
+              sum: 9,
+              attempt: 1,
+            },
+            permissions: {
+              can_reroll: true,
+              can_see_roll: true,
+              can_write: true,
+              can_penalize: true,
+            },
+          })
+          .build(),
+      );
+
+      await render(App);
+
+      const participants = document.querySelector<HTMLElement>(".side-panel--participants");
+      const board = document.querySelector<HTMLElement>(".board-frame");
+      const dicePanel = document.querySelector<HTMLElement>(".side-panel--dice");
+      const actionBar = document.querySelector<HTMLElement>(".action-bar");
+      const buttons = Array.from(document.querySelectorAll<HTMLElement>(".action-button"));
+      const participantFace = document.querySelector<HTMLElement>(".participant-face");
+      const die = document.querySelector<HTMLElement>(".die");
+
+      expect(participants).not.toBeNull();
+      expect(board).not.toBeNull();
+      expect(dicePanel).not.toBeNull();
+      expect(actionBar).not.toBeNull();
+      expect(participantFace).not.toBeNull();
+      expect(die).not.toBeNull();
+      expect(buttons).toHaveLength(3);
+
+      const participantsRect = participants!.getBoundingClientRect();
+      const boardRect = board!.getBoundingClientRect();
+      const dicePanelRect = dicePanel!.getBoundingClientRect();
+      const actionBarRect = actionBar!.getBoundingClientRect();
+      const participantFaceRect = participantFace!.getBoundingClientRect();
+      const dieRect = die!.getBoundingClientRect();
+      const buttonRects = buttons.map((button) => button.getBoundingClientRect());
+      const buttonWidths = buttonRects.map((rect) => rect.width);
+
+      expect(Math.abs(boardRect.left - participantsRect.right)).toBeLessThan(0.5);
+      expect(Math.abs(dicePanelRect.left - boardRect.right)).toBeLessThan(0.5);
+      expect(Math.abs(actionBarRect.top - participantsRect.bottom)).toBeLessThan(0.5);
+      expect(Math.abs(buttonWidths[0] - buttonWidths[1])).toBeLessThan(0.5);
+      expect(Math.abs(buttonWidths[1] - buttonWidths[2])).toBeLessThan(0.5);
+      expect(Math.abs(buttonRects[1].left - buttonRects[0].right)).toBeLessThan(0.5);
+      expect(Math.abs(buttonRects[2].left - buttonRects[1].right)).toBeLessThan(0.5);
+      expect(Math.abs(participantFaceRect.width - dieRect.width)).toBeLessThan(0.5);
+      expect(Math.abs(participantFaceRect.height - dieRect.height)).toBeLessThan(0.5);
+      expect(Math.abs(participantFaceRect.width - participantFaceRect.height)).toBeLessThan(0.5);
+      expect(getComputedStyle(participantFace!).borderRadius).toBe(
+        getComputedStyle(die!).borderRadius,
+      );
+      expect(getComputedStyle(buttons[0]!).backgroundColor).toBe("rgb(226, 189, 47)");
+      expect(getComputedStyle(buttons[1]!).backgroundColor).toBe("rgb(217, 101, 30)");
+      expect(getComputedStyle(buttons[2]!).backgroundColor).toBe("rgb(92, 67, 123)");
+      expect(getComputedStyle(actionBar!).gap).toBe("0px");
+      expect(getComputedStyle(buttons[0]!).borderRadius).toBe("0px");
     });
 
     test("hides available slots when the projection has no slots", async () => {
@@ -305,7 +367,7 @@ describe("Game", () => {
 
       await render(App);
 
-      expect(boardCellRing("orange", 0)).toBeNull();
+      expect(slot("orange", 0)?.querySelector("[data-slot-ring]")).toBeNull();
     });
 
     test("hides response controls when permissions deny them", async () => {
@@ -363,7 +425,7 @@ describe("Game", () => {
 
       const screen = await render(App);
 
-      await screen.getByRole("button", { name: "Select yellow slot 1" }).click();
+      await screen.getByRole("button", { name: "Select yellow column 1" }).click();
 
       await expect
         .element(screen.getByRole("button", { name: "Confirm selected cell" }))
@@ -406,7 +468,7 @@ describe("Game", () => {
       await expect
         .element(screen.getByRole("button", { name: "Cancel roll and take penalty" }))
         .toBeEnabled();
-      await screen.getByRole("button", { name: "Select orange slot 1" }).click();
+      await screen.getByRole("button", { name: "Select orange column 1" }).click();
       await expect
         .element(screen.getByRole("button", { name: "Confirm selected cell" }))
         .toBeEnabled();
@@ -553,10 +615,39 @@ describe("Game", () => {
 
       await render(App);
 
-      expect(boardCellValue("orange", 0)?.textContent).toBe("3");
-      expect(boardCellValue("yellow", 2)?.textContent).toBe("6");
-      expect(boardCellValue("purple", 8)?.textContent).toBe("9");
-      expect(boardCellValue("orange", 1)).toBeNull();
+      expect(slot("orange", 0)?.querySelector("[data-slot-value]")?.textContent).toBe("3");
+      expect(slot("yellow", 2)?.querySelector("[data-slot-value]")?.textContent).toBe("6");
+      expect(slot("purple", 8)?.querySelector("[data-slot-value]")?.textContent).toBe("9");
+      expect(slot("orange", 1)?.querySelector("[data-slot-value]")).toBeNull();
+    });
+
+    test("renders visible player penalties as penalty cross marks", async () => {
+      sessionMock.set(
+        sessionState
+          .transient({
+            game: {
+              phase: "result",
+              players: {
+                alice: player.build({ penalties: 2 }),
+                bob: player.build({ penalties: 3 }),
+              },
+            },
+          })
+          .build(),
+      );
+
+      const screen = await render(App);
+
+      expect(penalty(0)).not.toBeNull();
+      expect(penalty(1)).not.toBeNull();
+      expect(penalty(2)).toBeNull();
+
+      await screen.getByRole("radio", { name: "Show Bob sheet" }).click();
+
+      expect(penalty(0)).not.toBeNull();
+      expect(penalty(1)).not.toBeNull();
+      expect(penalty(2)).not.toBeNull();
+      expect(penalty(3)).toBeNull();
     });
 
     test("uses self instead of guessing from active player rows", async () => {
@@ -592,8 +683,8 @@ describe("Game", () => {
 
       await render(App);
 
-      expect(boardCellValue("orange", 0)).toBeNull();
-      expect(boardCellValue("yellow", 2)?.textContent).toBe("7");
+      expect(slot("orange", 0)?.querySelector("[data-slot-value]")).toBeNull();
+      expect(slot("yellow", 2)?.querySelector("[data-slot-value]")?.textContent).toBe("7");
     });
 
     test("preserves selected own slot while viewing another player sheet", async () => {
@@ -629,19 +720,19 @@ describe("Game", () => {
 
       const screen = await render(App);
 
-      expect(boardCellValue("orange", 0)?.textContent).toBe("3");
-      expect(boardCellRing("orange", 1)).not.toBeNull();
+      expect(slot("orange", 0)?.querySelector("[data-slot-value]")?.textContent).toBe("3");
+      expect(slot("orange", 1)?.querySelector("[data-slot-ring]")).not.toBeNull();
 
-      await screen.getByRole("button", { name: "Select orange slot 2" }).click();
+      await screen.getByRole("button", { name: "Select orange column 2" }).click();
       await expect
         .element(screen.getByRole("button", { name: "Confirm selected cell" }))
         .toBeEnabled();
 
       await screen.getByRole("radio", { name: "Show Bob sheet" }).click();
 
-      expect(boardCellValue("orange", 0)).toBeNull();
-      expect(boardCellValue("yellow", 2)?.textContent).toBe("7");
-      expect(boardCellRing("orange", 1)).toBeNull();
+      expect(slot("orange", 0)?.querySelector("[data-slot-value]")).toBeNull();
+      expect(slot("yellow", 2)?.querySelector("[data-slot-value]")?.textContent).toBe("7");
+      expect(slot("orange", 1)?.querySelector("[data-slot-ring]")).toBeNull();
       await expect
         .element(screen.getByRole("button", { name: "Confirm selected cell" }))
         .toBeEnabled();
@@ -715,11 +806,11 @@ describe("Game", () => {
 
       await expect.element(passButton).toBeEnabled();
       await expect.element(confirmButton).toBeDisabled();
-      expect(boardCellRing("orange", 0)).not.toBeNull();
-      expect(boardCellRing("purple", 8)).not.toBeNull();
-      expect(boardCellRing("yellow", 0)).toBeNull();
+      expect(slot("orange", 0)?.querySelector("[data-slot-ring]")).not.toBeNull();
+      expect(slot("purple", 8)?.querySelector("[data-slot-ring]")).not.toBeNull();
+      expect(slot("yellow", 0)?.querySelector("[data-slot-ring]")).toBeNull();
 
-      await screen.getByRole("button", { name: "Select purple slot 9" }).click();
+      await screen.getByRole("button", { name: "Select purple column 9" }).click();
       await expect.element(confirmButton).toBeEnabled();
 
       await passButton.click();

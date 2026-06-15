@@ -170,7 +170,7 @@
             disabled={$session.processing.penalize}
             onclick={cancel}
           >
-            Cancel
+            Pass
           </button>
         {:else if canPass}
           <button
@@ -224,8 +224,10 @@
       minmax(3.75rem, 0.16fr);
     grid-template-rows: minmax(0, auto) auto;
     align-items: stretch;
-    gap: clamp(0.5rem, 1.6vmin, 0.85rem);
     width: min(100%, calc((100vh - 2rem) * 2.35), 68rem);
+    border: 0.08rem solid var(--surface-border);
+    border-radius: 0;
+    background: #ffffff;
   }
 
   @supports (height: 100svh) {
@@ -236,6 +238,7 @@
 
   .board-frame {
     min-width: 0;
+    border-inline-start: 0.08rem solid var(--surface-border);
   }
 
   .side-panel {
@@ -246,10 +249,14 @@
     min-width: 0;
     padding: clamp(0.4rem, 1.2vmin, 0.65rem);
     margin: 0;
-    border: 0.08rem solid #d5d9e1;
-    border-radius: 0.65rem;
+    border: 0;
+    border-radius: 0;
     background: #f6f7f9;
     list-style: none;
+  }
+
+  .side-panel--dice {
+    border-inline-start: 0.08rem solid var(--surface-border);
   }
 
   .participant-slot,
@@ -275,7 +282,6 @@
     height: 100%;
     padding: 0;
     border: 0;
-    border-radius: 999rem;
     margin: 0;
     cursor: pointer;
     opacity: 0;
@@ -290,7 +296,6 @@
     height: 100%;
     box-sizing: border-box;
     border: 0.12rem solid #858585;
-    border-radius: 999rem;
     background: #ffffff;
     pointer-events: none;
     box-shadow:
@@ -305,10 +310,9 @@
   .participant-slot--active .participant-face {
     border-color: #2f6fed;
     outline: 0.18rem solid rgb(47 111 237 / 0.28);
-    outline-offset: 0.1rem;
+    outline-offset: -0.32rem;
     background: #ffffff;
     box-shadow:
-      0 0 0 0.34rem rgb(47 111 237 / 0.12),
       inset 0 0.12rem 0.18rem rgb(255 255 255 / 0.7),
       inset 0 -0.12rem 0.24rem rgb(0 0 0 / 0.1);
   }
@@ -316,7 +320,7 @@
   .participant-slot:not(.participant-slot--active) .participant-radio:checked + .participant-face {
     border-color: #111827;
     outline: 0.16rem solid rgb(17 24 39 / 0.18);
-    outline-offset: 0.08rem;
+    outline-offset: -0.3rem;
   }
 
   .participant-radio:focus-visible + .participant-face {
@@ -362,7 +366,6 @@
     box-sizing: border-box;
     padding: 0;
     border: 0.12rem solid transparent;
-    border-radius: 0.4rem;
     margin: 0;
     -webkit-appearance: none;
     appearance: none;
@@ -382,15 +385,15 @@
   }
 
   .die--orange {
-    background: #d9651e;
+    background: var(--game-orange);
   }
 
   .die--yellow {
-    background: #e2bd2f;
+    background: var(--game-yellow);
   }
 
   .die--purple {
-    background: #5c437b;
+    background: var(--game-purple);
   }
 
   .dice-stack--can-roll .die:checked {
@@ -435,7 +438,7 @@
   .roll-button {
     padding: 0;
     border: 0.12rem solid #858585;
-    border-radius: 999rem;
+    border-radius: 0;
     background: #ffffff;
     color: #333840;
     box-shadow:
@@ -465,44 +468,70 @@
     display: grid;
     grid-column: 1 / -1;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: clamp(0.5rem, 1.6vmin, 0.85rem);
-    border-block-start: 0.08rem solid #eef0f4;
+    gap: 0;
     width: 100%;
+    border-block-start: 0.08rem solid #eef0f4;
+    background: #ffffff;
   }
 
   .action-button {
+    --action-button-bg: #ffffff;
+    --action-button-color: #333840;
+    --action-button-hover-bg: #eef0f4;
+
     width: 100%;
+    height: 100%;
+    min-width: 0;
     min-height: 2.6rem;
     padding: 0 0.45rem;
-    border: 0.1rem solid #858585;
-    border-radius: 0.4rem;
-    background: #ffffff;
-    color: #333840;
+    border: 0;
+    border-radius: 0;
+    background: var(--action-button-bg);
+    color: var(--action-button-color);
     cursor: pointer;
     font: inherit;
     font-size: clamp(0.72rem, 1.6vmin, 0.9rem);
     font-weight: 800;
     line-height: 1;
+    overflow-wrap: anywhere;
   }
 
   .action-button--reroll {
+    --action-button-bg: var(--game-yellow);
+    --action-button-color: #171717;
+    --action-button-hover-bg: #d4ad22;
+
     grid-column: 1;
   }
 
   .action-button--cancel,
   .action-button--pass {
+    --action-button-bg: var(--game-orange);
+    --action-button-color: #171717;
+    --action-button-hover-bg: #c85818;
+
     grid-column: 2;
+    border-inline-start: 0.08rem solid var(--surface-border);
   }
 
   .action-button--confirm {
+    --action-button-bg: var(--game-purple);
+    --action-button-color: #ffffff;
+    --action-button-hover-bg: #4f386e;
+
     grid-column: 3;
+    border-inline-start: 0.08rem solid var(--surface-border);
   }
 
   .action-button:disabled {
     cursor: default;
+    opacity: 0.52;
   }
 
-  .action-button:hover:not(:disabled),
+  .action-button:hover:not(:disabled) {
+    background: var(--action-button-hover-bg);
+  }
+
   .roll-button:hover:not(:disabled) {
     background: #eef0f4;
   }
@@ -539,7 +568,6 @@
         minmax(2.6rem, 0.18fr)
         minmax(0, 1fr)
         minmax(2.6rem, 0.18fr);
-      gap: 0.4rem;
     }
 
     .side-panel {
@@ -553,18 +581,10 @@
       width: min(100%, 2.15rem);
     }
 
-    .die {
-      border-radius: 0.32rem;
-    }
-
-    .action-bar {
-      gap: 0.4rem;
-    }
-
     .action-button {
       min-height: 2.2rem;
-      padding: 0 0.25rem;
-      font-size: clamp(0.62rem, 2.4vmin, 0.78rem);
+      padding: 0 0.2rem;
+      font-size: clamp(0.55rem, 2vmin, 0.72rem);
     }
   }
 </style>

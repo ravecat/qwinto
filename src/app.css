@@ -1,4 +1,9 @@
 :root {
+  --game-orange: #d9651e;
+  --game-purple: #5c437b;
+  --game-yellow: #e2bd2f;
+  --surface-border: #cbd0d8;
+
   font-family: ui-monospace, "SF Mono", "Cascadia Mono", "Consolas", monospace;
   color: #171717;
   background: #f6f7f9;

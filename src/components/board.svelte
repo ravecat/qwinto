@@ -4,7 +4,14 @@
   import { selectedSlot, selectSlot, visiblePlayerId } from "~store/overlay.svelte";
   import { session, type Slot } from "~store/session";
 
-  type BoardSlot = Slot & {
+  type BoardSlot = {
+    row: Slot["row"];
+    col: number;
+    x: number;
+    y: number;
+  };
+
+  type PenaltySlot = {
     x: number;
     y: number;
   };
@@ -16,35 +23,43 @@
   const groupTranslateY = 5.016;
   const slotSize = 43.228;
   const slotRadius = 7.856;
+  const penaltyMarkRadius = 9.6;
 
   const slots: BoardSlot[] = [
-    { row: "orange", slot: 0, x: 101.738, y: 35.278 },
-    { row: "orange", slot: 1, x: 147.013, y: 35.278 },
-    { row: "orange", slot: 2, x: 192.288, y: 35.278 },
-    { row: "orange", slot: 3, x: 282.838, y: 35.278 },
-    { row: "orange", slot: 4, x: 328.113, y: 35.278 },
-    { row: "orange", slot: 5, x: 373.388, y: 35.278 },
-    { row: "orange", slot: 6, x: 418.663, y: 35.278 },
-    { row: "orange", slot: 7, x: 463.938, y: 35.278 },
-    { row: "orange", slot: 8, x: 509.213, y: 35.278 },
-    { row: "yellow", slot: 0, x: 56.463, y: 97.125 },
-    { row: "yellow", slot: 1, x: 101.738, y: 97.125 },
-    { row: "yellow", slot: 2, x: 147.013, y: 97.125 },
-    { row: "yellow", slot: 3, x: 192.288, y: 97.125 },
-    { row: "yellow", slot: 4, x: 237.563, y: 97.125 },
-    { row: "yellow", slot: 5, x: 328.113, y: 97.125 },
-    { row: "yellow", slot: 6, x: 373.388, y: 97.125 },
-    { row: "yellow", slot: 7, x: 418.663, y: 97.125 },
-    { row: "yellow", slot: 8, x: 463.938, y: 97.125 },
-    { row: "purple", slot: 0, x: 11.188, y: 158.972 },
-    { row: "purple", slot: 1, x: 56.463, y: 158.972 },
-    { row: "purple", slot: 2, x: 101.738, y: 158.972 },
-    { row: "purple", slot: 3, x: 147.013, y: 158.972 },
-    { row: "purple", slot: 4, x: 237.563, y: 158.972 },
-    { row: "purple", slot: 5, x: 282.838, y: 158.972 },
-    { row: "purple", slot: 6, x: 328.113, y: 158.972 },
-    { row: "purple", slot: 7, x: 373.388, y: 158.972 },
-    { row: "purple", slot: 8, x: 418.663, y: 158.972 },
+    { row: "orange", col: 0, x: 101.738, y: 35.278 },
+    { row: "orange", col: 1, x: 147.013, y: 35.278 },
+    { row: "orange", col: 2, x: 192.288, y: 35.278 },
+    { row: "orange", col: 3, x: 282.838, y: 35.278 },
+    { row: "orange", col: 4, x: 328.113, y: 35.278 },
+    { row: "orange", col: 5, x: 373.388, y: 35.278 },
+    { row: "orange", col: 6, x: 418.663, y: 35.278 },
+    { row: "orange", col: 7, x: 463.938, y: 35.278 },
+    { row: "orange", col: 8, x: 509.213, y: 35.278 },
+    { row: "yellow", col: 0, x: 56.463, y: 97.125 },
+    { row: "yellow", col: 1, x: 101.738, y: 97.125 },
+    { row: "yellow", col: 2, x: 147.013, y: 97.125 },
+    { row: "yellow", col: 3, x: 192.288, y: 97.125 },
+    { row: "yellow", col: 4, x: 237.563, y: 97.125 },
+    { row: "yellow", col: 5, x: 328.113, y: 97.125 },
+    { row: "yellow", col: 6, x: 373.388, y: 97.125 },
+    { row: "yellow", col: 7, x: 418.663, y: 97.125 },
+    { row: "yellow", col: 8, x: 463.938, y: 97.125 },
+    { row: "purple", col: 0, x: 11.188, y: 158.972 },
+    { row: "purple", col: 1, x: 56.463, y: 158.972 },
+    { row: "purple", col: 2, x: 101.738, y: 158.972 },
+    { row: "purple", col: 3, x: 147.013, y: 158.972 },
+    { row: "purple", col: 4, x: 237.563, y: 158.972 },
+    { row: "purple", col: 5, x: 282.838, y: 158.972 },
+    { row: "purple", col: 6, x: 328.113, y: 158.972 },
+    { row: "purple", col: 7, x: 373.388, y: 158.972 },
+    { row: "purple", col: 8, x: 418.663, y: 158.972 },
+  ];
+
+  const penaltySlots: PenaltySlot[] = [
+    { x: 440.277, y: 242.433 },
+    { x: 485.552, y: 242.433 },
+    { x: 530.827, y: 242.433 },
+    { x: 598.196, y: 242.433 },
   ];
 
   const game = $derived($session.value?.game ?? null);
@@ -55,6 +70,9 @@
   const canSelectSlot = $derived(isOwnSheet && $permissions.can_write);
   const availableSlots = $derived(isOwnSheet ? ($session.value?.available_slots ?? []) : []);
   const sheet = $derived(sheetPlayerId ? (game?.players[sheetPlayerId]?.rows ?? null) : null);
+  const penalties = $derived(
+    penaltySlots.slice(0, game?.players[sheetPlayerId ?? ""]?.penalties ?? 0),
+  );
 </script>
 
 <div class="board" role="group" aria-label="Qwinto game board">
@@ -68,21 +86,19 @@
     focusable="false"
   >
     <g transform="translate(-15.455 5.016)">
-      {#each slots as slot (slot)}
-        {@const available = availableSlots.some(
-          (availableSlot) => availableSlot.row === slot.row && availableSlot.slot === slot.slot,
-        )}
-        {@const selected =
-          selectedSlot.value?.row === slot.row && selectedSlot.value.slot === slot.slot}
-        {@const value = sheet?.[slot.row]?.[slot.slot]}
+      {#each slots as { row, col, x, y } (`${row}-${col}`)}
+        {@const available = availableSlots.some((slot) => slot.row === row && slot.slot === col)}
+        {@const selected = selectedSlot.value?.row === row && selectedSlot.value.slot === col}
+        {@const value = sheet?.[row]?.[col]}
 
-        <g data-row={slot.row} data-slot={slot.slot}>
+        <g data-row={row} data-col={col}>
           {#if available}
             <rect
+              data-slot-ring
               class="slot-available-ring"
               class:slot-available-ring--selected={selected}
-              x={slot.x}
-              y={slot.y}
+              {x}
+              {y}
               width={slotSize}
               height={slotSize}
               rx={slotRadius}
@@ -92,9 +108,10 @@
 
           {#if value !== undefined}
             <text
+              data-slot-value
               class="slot-value"
-              x={slot.x + slotSize / 2}
-              y={slot.y + slotSize / 2}
+              x={x + slotSize / 2}
+              y={y + slotSize / 2}
               text-anchor="middle"
               dominant-baseline="central"
             >
@@ -103,29 +120,43 @@
           {/if}
         </g>
       {/each}
+
+      {#each penalties as { x, y }, index (index)}
+        <g class="penalty-mark" data-penalty={index}>
+          <line
+            x1={x - penaltyMarkRadius}
+            y1={y - penaltyMarkRadius}
+            x2={x + penaltyMarkRadius}
+            y2={y + penaltyMarkRadius}
+          />
+          <line
+            x1={x + penaltyMarkRadius}
+            y1={y - penaltyMarkRadius}
+            x2={x - penaltyMarkRadius}
+            y2={y + penaltyMarkRadius}
+          />
+        </g>
+      {/each}
     </g>
   </svg>
 
   {#if canSelectSlot}
     <div class="board-hit-layer" aria-label="Available cells">
-      {#each slots as slot (slot)}
-        {@const available = availableSlots.some(
-          (availableSlot) => availableSlot.row === slot.row && availableSlot.slot === slot.slot,
-        )}
-        {@const selected =
-          selectedSlot.value?.row === slot.row && selectedSlot.value.slot === slot.slot}
+      {#each slots as { row, col, x, y } (`${row}-${col}`)}
+        {@const available = availableSlots.some((slot) => slot.row === row && slot.slot === col)}
+        {@const selected = selectedSlot.value?.row === row && selectedSlot.value.slot === col}
 
         {#if available}
           <button
             class="slot-hit-target"
-            style:left={`${((slot.x + groupTranslateX - viewBoxMinX) / viewBoxWidth) * 100}%`}
-            style:top={`${((slot.y + groupTranslateY) / viewBoxHeight) * 100}%`}
+            style:left={`${((x + groupTranslateX - viewBoxMinX) / viewBoxWidth) * 100}%`}
+            style:top={`${((y + groupTranslateY) / viewBoxHeight) * 100}%`}
             style:width={`${(slotSize / viewBoxWidth) * 100}%`}
             style:height={`${(slotSize / viewBoxHeight) * 100}%`}
             type="button"
-            aria-label="Select {slot.row} slot {slot.slot + 1}"
+            aria-label="Select {row} column {col + 1}"
             aria-pressed={selected}
-            onclick={() => selectSlot(slot)}
+            onclick={() => selectSlot({ row, slot: col })}
           ></button>
         {/if}
       {/each}
@@ -175,6 +206,14 @@
     paint-order: stroke;
     font-size: 1.45rem;
     font-weight: 700;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .penalty-mark {
+    stroke: #9a2a2a;
+    stroke-width: 4.2;
+    stroke-linecap: round;
     pointer-events: none;
     user-select: none;
   }
