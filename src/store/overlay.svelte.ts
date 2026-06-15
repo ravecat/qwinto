@@ -14,7 +14,7 @@ export const visiblePlayerId = {
     return selectedVisiblePlayerId ?? sessionState.current.value?.self ?? null;
   },
   set value(playerId: string | null) {
-    selectedVisiblePlayerId = playerId === sessionState.current.value?.self ? null : playerId;
+    selectedVisiblePlayerId = playerId;
   },
 };
 

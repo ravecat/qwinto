@@ -53,6 +53,24 @@ describe("Game", () => {
       await expect.element(screen.getByRole("radio", { name: "Show Bob sheet" })).not.toBeChecked();
     });
 
+    test("defaults visible sheet to self and stores the selected participant id", async () => {
+      sessionMock.set(sessionState.transient({ game: { phase: "roll" } }).build());
+
+      const screen = await render(App);
+      const aliceSheet = screen.getByRole("radio", { name: "Show Alice sheet" });
+      const bobSheet = screen.getByRole("radio", { name: "Show Bob sheet" });
+
+      await expect.element(aliceSheet).toBeChecked();
+      await expect.element(bobSheet).not.toBeChecked();
+      expect(visiblePlayerId.value).toBe("alice");
+
+      await bobSheet.click();
+
+      await expect.element(aliceSheet).not.toBeChecked();
+      await expect.element(bobSheet).toBeChecked();
+      expect(visiblePlayerId.value).toBe("bob");
+    });
+
     test("lets the active player choose dice and roll", async () => {
       sessionMock.set(
         sessionState
