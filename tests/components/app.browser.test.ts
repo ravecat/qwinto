@@ -213,7 +213,9 @@ describe("Game", () => {
 
       await expect.element(orangeDie).toBeChecked();
       await expect.element(yellowDie).toBeChecked();
-      await expect.element(screen.getByLabelText("Rolled sum 7")).toBeVisible();
+      await expect.element(screen.getByText("2")).toBeVisible();
+      await expect.element(screen.getByText("5")).toBeVisible();
+      await expect.element(screen.getByLabelText("Rolled sum 7")).not.toBeInTheDocument();
 
       sessionMock.set(sessionState.transient({ game: { phase: "roll", cursor: 1 } }).build());
 
@@ -264,10 +266,11 @@ describe("Game", () => {
         name: "Cancel roll and take penalty",
       });
       const confirmButton = screen.getByRole("button", {
-        name: "Confirm selected cell",
+        name: "Confirm selected cell with result 9",
       });
 
-      await expect.element(screen.getByLabelText("Rolled sum 9")).toBeVisible();
+      await expect.element(screen.getByLabelText("Rolled sum 9")).not.toBeInTheDocument();
+      await expect.element(screen.getByText("9")).toBeVisible();
       await expect
         .element(screen.getByRole("button", { name: "Roll selected dice" }))
         .not.toBeInTheDocument();
@@ -405,7 +408,8 @@ describe("Game", () => {
 
       const screen = await render(App);
 
-      await expect.element(screen.getByLabelText("Rolled sum 4")).toBeVisible();
+      await expect.element(screen.getByText("4")).toBeVisible();
+      await expect.element(screen.getByLabelText("Rolled sum 4")).not.toBeInTheDocument();
       await expect
         .element(screen.getByRole("button", { name: "Reroll same dice" }))
         .not.toBeInTheDocument();
@@ -415,6 +419,35 @@ describe("Game", () => {
       await expect
         .element(screen.getByRole("button", { name: "Confirm selected cell" }))
         .not.toBeInTheDocument();
+    });
+
+    test("shows the confirm result when write permission implies roll visibility", async () => {
+      sessionMock.set(
+        sessionState
+          .transient({
+            game: {
+              phase: "write_or_pass",
+              dices: { orange: 3, yellow: 5 },
+              sum: 8,
+              attempt: 1,
+            },
+            permissions: { can_write: true },
+            session: { available_slots: [{ row: "orange", slot: 0 }] },
+          })
+          .build(),
+      );
+
+      const screen = await render(App);
+      const confirmButton = screen.getByRole("button", {
+        name: "Confirm selected cell with result 8",
+      });
+
+      await expect.element(screen.getByText("3")).toBeVisible();
+      await expect.element(screen.getByText("5")).toBeVisible();
+      await expect.element(screen.getByText("8")).toBeVisible();
+      await expect.element(confirmButton).toBeDisabled();
+      await screen.getByRole("button", { name: "Select orange column 1" }).click();
+      await expect.element(confirmButton).toBeEnabled();
     });
 
     test("disables confirm while write is processing", async () => {
@@ -510,7 +543,8 @@ describe("Game", () => {
 
       const screen = await render(App);
 
-      await expect.element(screen.getByLabelText("Rolled sum 2")).toBeVisible();
+      await expect.element(screen.getByText("2")).toBeVisible();
+      await expect.element(screen.getByLabelText("Rolled sum 2")).not.toBeInTheDocument();
       await expect
         .element(screen.getByRole("button", { name: "Reroll same dice" }))
         .not.toBeInTheDocument();
@@ -780,7 +814,8 @@ describe("Game", () => {
 
       const screen = await render(App);
 
-      await expect.element(screen.getByLabelText("Rolled sum 6")).toBeVisible();
+      await expect.element(screen.getByText("6")).toBeVisible();
+      await expect.element(screen.getByLabelText("Rolled sum 6")).not.toBeInTheDocument();
       await expect.element(screen.getByRole("checkbox", { name: "yellow die" })).toBeChecked();
       await expect.element(screen.getByRole("checkbox", { name: "orange die" })).not.toBeChecked();
       await expect
@@ -820,7 +855,9 @@ describe("Game", () => {
 
       const screen = await render(App);
       const passButton = screen.getByRole("button", { name: "Pass result" });
-      const confirmButton = screen.getByRole("button", { name: "Confirm selected cell" });
+      const confirmButton = screen.getByRole("button", {
+        name: "Confirm selected cell with result 9",
+      });
 
       await expect.element(passButton).toBeEnabled();
       await expect.element(confirmButton).toBeDisabled();

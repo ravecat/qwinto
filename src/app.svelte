@@ -19,7 +19,9 @@
     });
   });
 
-  const canSeeRoll = $derived($permissions.can_see_roll && Boolean(game?.sum));
+  const canSeeRoll = $derived(
+    ($permissions.can_see_roll || $permissions.can_write) && Boolean(game?.sum),
+  );
   const canRoll = $derived($permissions.can_roll && !$session.processing.roll);
   const canWrite = $derived($permissions.can_write);
   const canReroll = $derived($permissions.can_reroll);
@@ -131,10 +133,6 @@
         >
           Roll
         </button>
-      {:else if canSeeRoll}
-        <div class="sum-token" aria-label="Rolled sum {game?.sum}">
-          {game?.sum}
-        </div>
       {/if}
 
       {#if actionError}
@@ -180,7 +178,7 @@
             disabled={$session.processing.pass}
             onclick={pass}
           >
-            pass
+            Pass
           </button>
         {/if}
 
@@ -188,11 +186,12 @@
           <button
             class="action-button action-button--confirm"
             type="button"
-            aria-label="Confirm selected cell"
+            aria-label="Confirm selected cell with result {game?.sum}"
             disabled={selectedSlot.value === null || $session.processing.write}
             onclick={confirm}
           >
             Confirm
+            <span class="action-button-result">{game?.sum}</span>
           </button>
         {/if}
       </div>
@@ -261,8 +260,7 @@
 
   .participant-slot,
   .die-option,
-  .roll-button,
-  .sum-token {
+  .roll-button {
     width: min(100%, 3rem);
     aspect-ratio: 1;
   }
@@ -429,13 +427,9 @@
     text-shadow: 0 0.08rem 0.1rem rgb(0 0 0 / 0.34);
   }
 
-  .roll-button,
-  .sum-token {
+  .roll-button {
     display: grid;
     place-items: center;
-  }
-
-  .roll-button {
     padding: 0;
     border: 0.12rem solid #858585;
     border-radius: 0;
@@ -446,21 +440,8 @@
       inset 0 -0.12rem 0.24rem rgb(0 0 0 / 0.12);
     cursor: pointer;
     font: inherit;
-    font-size: clamp(0.55rem, 1.5vmin, 0.72rem);
+    font-size: clamp(0.825rem, 2.25vmin, 1.08rem);
     font-weight: 700;
-    line-height: 1;
-  }
-
-  .sum-token {
-    border: 0.12rem solid #333840;
-    border-radius: 999rem;
-    background: #ffffff;
-    color: #333840;
-    box-shadow:
-      inset 0 0.12rem 0.18rem rgb(255 255 255 / 0.72),
-      inset 0 -0.12rem 0.24rem rgb(0 0 0 / 0.12);
-    font-size: clamp(1rem, 2.6vmin, 1.35rem);
-    font-weight: 800;
     line-height: 1;
   }
 
@@ -490,7 +471,7 @@
     color: var(--action-button-color);
     cursor: pointer;
     font: inherit;
-    font-size: clamp(0.72rem, 1.6vmin, 0.9rem);
+    font-size: clamp(1.08rem, 2.4vmin, 1.35rem);
     font-weight: 800;
     line-height: 1;
     overflow-wrap: anywhere;
@@ -521,6 +502,11 @@
 
     grid-column: 3;
     border-inline-start: 0.08rem solid var(--surface-border);
+  }
+
+  .action-button-result {
+    margin-inline-start: 0.35rem;
+    font-variant-numeric: tabular-nums;
   }
 
   .action-button:disabled {
@@ -576,15 +562,14 @@
 
     .participant-slot,
     .die-option,
-    .roll-button,
-    .sum-token {
+    .roll-button {
       width: min(100%, 2.15rem);
     }
 
     .action-button {
       min-height: 2.2rem;
       padding: 0 0.2rem;
-      font-size: clamp(0.55rem, 2vmin, 0.72rem);
+      font-size: clamp(0.825rem, 3vmin, 1.08rem);
     }
   }
 </style>
