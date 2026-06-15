@@ -71,6 +71,39 @@ describe("Game", () => {
       expect(visiblePlayerId.value).toBe("bob");
     });
 
+    test("marks the opened session player with a star instead of the active player", async () => {
+      sessionMock.set(
+        sessionState
+          .transient({
+            game: { phase: "roll", cursor: 0 },
+            session: { self: "bob" },
+          })
+          .build(),
+      );
+
+      const screen = await render(App);
+      const aliceSheet = screen.getByRole("radio", { name: "Show Alice sheet" });
+      const bobSheet = screen.getByRole("radio", { name: "Show Bob sheet" });
+      const aliceSlot = document
+        .querySelector<HTMLInputElement>('input[aria-label="Show Alice sheet"]')
+        ?.closest(".participant-slot");
+      const bobSlot = document
+        .querySelector<HTMLInputElement>('input[aria-label="Show Bob sheet"]')
+        ?.closest(".participant-slot");
+      const stars = document.querySelectorAll<HTMLElement>(".participant-self-star");
+
+      await expect.element(aliceSheet).toHaveAttribute("aria-current", "true");
+      await expect.element(bobSheet).not.toHaveAttribute("aria-current", "true");
+      await expect.element(aliceSheet).not.toHaveAttribute("aria-describedby");
+      await expect.element(bobSheet).toHaveAttribute("aria-describedby", "participant-bob-self");
+      await expect.element(bobSheet).toBeChecked();
+      expect(stars).toHaveLength(1);
+      expect(document.getElementById("participant-bob-self")?.textContent?.trim()).toBe("You");
+      expect(aliceSlot?.querySelector(".participant-self-star")).toBeNull();
+      expect(bobSlot?.classList.contains("participant-slot--self")).toBe(true);
+      expect(bobSlot?.querySelector(".participant-self-star")).toBe(stars[0]);
+    });
+
     test("lets the active player choose dice and roll", async () => {
       sessionMock.set(
         sessionState

@@ -9,12 +9,15 @@
   let dice = $derived(Object.keys(game?.dices ?? {}) as DieColor[]);
 
   const members = $derived.by(() => {
+    const self = $session.value?.self ?? null;
+
     return Object.entries($session.value?.members ?? {}).map(([id, member], index) => {
       return {
         id,
         label: member.display_name?.trim() || `Player ${index + 1}`,
         avatar: member.avatar,
         active: id === game?.order[game.cursor],
+        self: id === self,
       };
     });
   });
@@ -60,6 +63,7 @@
         <label
           class="participant-slot participant-slot--occupied"
           class:participant-slot--active={member.active}
+          class:participant-slot--self={member.self}
         >
           <input
             class="participant-radio"
@@ -68,6 +72,7 @@
             bind:group={visiblePlayerId.value}
             value={member.id}
             aria-label="Show {member.label} sheet"
+            aria-describedby={member.self ? `participant-${member.id}-self` : undefined}
             aria-current={member.active ? "true" : undefined}
           />
 
@@ -86,7 +91,17 @@
                 {member.label.charAt(0).toUpperCase()}
               </span>
             {/if}
+
+            {#if member.self}
+              <span class="participant-self-star"></span>
+            {/if}
           </span>
+
+          {#if member.self}
+            <span id="participant-{member.id}-self" class="participant-self-description">
+              You
+            </span>
+          {/if}
         </label>
       {/each}
     </fieldset>
@@ -286,6 +301,7 @@
   }
 
   .participant-face {
+    position: relative;
     display: grid;
     place-items: center;
     overflow: hidden;
@@ -324,6 +340,42 @@
   .participant-radio:focus-visible + .participant-face {
     outline: 0.16rem solid #111827;
     outline-offset: -0.24rem;
+  }
+
+  .participant-self-star {
+    position: absolute;
+    inset-block-start: clamp(0.1rem, 0.45vmin, 0.18rem);
+    inset-inline-start: clamp(0.1rem, 0.45vmin, 0.18rem);
+    z-index: 1;
+    width: clamp(0.875rem, 2.1875vmin, 1.1875rem);
+    aspect-ratio: 1;
+    background: #f5c542;
+    clip-path: polygon(
+      50% 0,
+      61% 35%,
+      98% 35%,
+      68% 57%,
+      79% 91%,
+      50% 70%,
+      21% 91%,
+      32% 57%,
+      2% 35%,
+      39% 35%
+    );
+    filter: drop-shadow(0 0.05rem 0.05rem rgb(0 0 0 / 0.28));
+    pointer-events: none;
+  }
+
+  .participant-self-description {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    border: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   .participant-avatar {
