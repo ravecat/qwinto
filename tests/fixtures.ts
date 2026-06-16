@@ -28,7 +28,7 @@ export const player = Factory.define<Player>(() => ({
     purple: {},
   },
   penalties: 0,
-  status: "ready",
+  status: "idle",
 }));
 
 export const game = Factory.define<Game>(() => ({

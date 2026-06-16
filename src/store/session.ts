@@ -4,7 +4,7 @@ export type DieColor = "orange" | "yellow" | "purple";
 export type Dice = Partial<Record<DieColor, number>>;
 export type GamePhase = "setup" | "ready" | "roll" | "write_or_pass" | "result" | "finished";
 export type SessionPhase = "waiting_for_players" | "in_progress" | "finished";
-export type PlayerStatus = "ready" | "wrote" | "failed" | "passed";
+export type PlayerStatus = "idle" | "pending" | "wrote" | "skipped";
 
 export type Member = {
   online_at?: number;

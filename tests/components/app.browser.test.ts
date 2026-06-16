@@ -71,6 +71,41 @@ describe("Game", () => {
       expect(visiblePlayerId.value).toBe("bob");
     });
 
+    test("shows response labels from participant statuses", async () => {
+      sessionMock.set(
+        sessionState
+          .transient({
+            game: {
+              phase: "write_or_pass",
+              players: {
+                alice: player.build({ status: "pending" }),
+                bob: player.build({ status: "wrote" }),
+              },
+            },
+          })
+          .build(),
+      );
+
+      await render(App);
+
+      const aliceSlot = document
+        .querySelector<HTMLInputElement>('input[aria-label="Show Alice sheet"]')
+        ?.closest(".participant-slot");
+      const bobSlot = document
+        .querySelector<HTMLInputElement>('input[aria-label="Show Bob sheet"]')
+        ?.closest(".participant-slot");
+
+      expect(aliceSlot?.classList.contains("participant-slot--awaiting")).toBe(true);
+      expect(getComputedStyle(aliceSlot!.querySelector(".participant-face")!, "::after").content).toBe(
+        '"TURN"',
+      );
+      expect(bobSlot?.classList.contains("participant-slot--ready")).toBe(true);
+      expect(getComputedStyle(bobSlot!.querySelector(".participant-face")!, "::after").content).toBe(
+        '"READY"',
+      );
+      expect(document.querySelector(".participant-status-label")).toBeNull();
+    });
+
     test("marks the opened session player with a star instead of the active player", async () => {
       sessionMock.set(
         sessionState
@@ -296,7 +331,7 @@ describe("Game", () => {
         name: "Reroll same dice",
       });
       const cancelButton = screen.getByRole("button", {
-        name: "Cancel roll and take penalty",
+        name: "Take penalty",
       });
       const confirmButton = screen.getByRole("button", {
         name: "Confirm selected cell with result 9",
@@ -447,7 +482,7 @@ describe("Game", () => {
         .element(screen.getByRole("button", { name: "Reroll same dice" }))
         .not.toBeInTheDocument();
       await expect
-        .element(screen.getByRole("button", { name: "Cancel roll and take penalty" }))
+        .element(screen.getByRole("button", { name: "Take penalty" }))
         .not.toBeInTheDocument();
       await expect
         .element(screen.getByRole("button", { name: "Confirm selected cell" }))
@@ -550,7 +585,7 @@ describe("Game", () => {
 
       await expect.element(screen.getByRole("button", { name: "Reroll same dice" })).toBeEnabled();
       await expect
-        .element(screen.getByRole("button", { name: "Cancel roll and take penalty" }))
+        .element(screen.getByRole("button", { name: "Take penalty" }))
         .toBeEnabled();
       await screen.getByRole("button", { name: "Select orange column 1" }).click();
       await expect
@@ -582,7 +617,7 @@ describe("Game", () => {
         .element(screen.getByRole("button", { name: "Reroll same dice" }))
         .not.toBeInTheDocument();
       await expect
-        .element(screen.getByRole("button", { name: "Cancel roll and take penalty" }))
+        .element(screen.getByRole("button", { name: "Take penalty" }))
         .not.toBeInTheDocument();
       await expect
         .element(screen.getByRole("button", { name: "Confirm selected cell" }))
@@ -855,7 +890,7 @@ describe("Game", () => {
         .element(screen.getByRole("button", { name: "Reroll same dice" }))
         .not.toBeInTheDocument();
       await expect
-        .element(screen.getByRole("button", { name: "Cancel roll and take penalty" }))
+        .element(screen.getByRole("button", { name: "Take penalty" }))
         .not.toBeInTheDocument();
       await expect
         .element(screen.getByRole("button", { name: "Confirm selected cell" }))

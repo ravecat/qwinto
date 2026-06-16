@@ -2,7 +2,12 @@
   import Board from "~components/board.svelte";
   import permissions from "~store/permissions";
   import { selectedSlot, visiblePlayerId } from "~store/overlay.svelte";
-  import { actionErrorMessage, type DieColor, session, timeoutErrorMessage } from "~store/session";
+  import {
+    actionErrorMessage,
+    type DieColor,
+    session,
+    timeoutErrorMessage,
+  } from "~store/session";
 
   const game = $derived($session.value?.game ?? null);
 
@@ -11,15 +16,18 @@
   const members = $derived.by(() => {
     const self = $session.value?.self ?? null;
 
-    return Object.entries($session.value?.members ?? {}).map(([id, member], index) => {
-      return {
-        id,
-        label: member.display_name?.trim() || `Player ${index + 1}`,
-        avatar: member.avatar,
-        active: id === game?.order[game.cursor],
-        self: id === self,
-      };
-    });
+    return Object.entries($session.value?.members ?? {}).map(
+      ([id, member], index) => {
+        return {
+          id,
+          label: member.display_name?.trim() || `Player ${index + 1}`,
+          avatar: member.avatar,
+          active: id === game?.order[game.cursor],
+          self: id === self,
+          status: game?.players[id]?.status,
+        };
+      },
+    );
   });
 
   const canSeeRoll = $derived(
@@ -30,7 +38,9 @@
   const canReroll = $derived($permissions.can_reroll);
   const canPenalize = $derived($permissions.can_penalize);
   const canPass = $derived($permissions.can_pass);
-  const hasAvailableActions = $derived(canReroll || canPenalize || canWrite || canPass);
+  const hasAvailableActions = $derived(
+    canReroll || canPenalize || canPass || canWrite,
+  );
 
   const actionError = $derived(actionErrorMessage($session));
   const timeoutError = $derived(timeoutErrorMessage($session));
@@ -58,12 +68,18 @@
 
 <main class="game">
   <div class="play-surface">
-    <fieldset class="side-panel side-panel--participants" aria-label="Participants">
+    <fieldset
+      class="side-panel side-panel--participants"
+      aria-label="Participants"
+    >
       {#each members as member (member.id)}
         <label
           class="participant-slot participant-slot--occupied"
           class:participant-slot--active={member.active}
           class:participant-slot--self={member.self}
+          class:participant-slot--awaiting={member.status === "pending"}
+          class:participant-slot--ready={member.status === "wrote" ||
+            member.status === "skipped"}
         >
           <input
             class="participant-radio"
@@ -72,7 +88,9 @@
             bind:group={visiblePlayerId.value}
             value={member.id}
             aria-label="Show {member.label} sheet"
-            aria-describedby={member.self ? `participant-${member.id}-self` : undefined}
+            aria-describedby={member.self
+              ? `participant-${member.id}-self`
+              : undefined}
             aria-current={member.active ? "true" : undefined}
           />
 
@@ -98,7 +116,10 @@
           </span>
 
           {#if member.self}
-            <span id="participant-{member.id}-self" class="participant-self-description">
+            <span
+              id="participant-{member.id}-self"
+              class="participant-self-description"
+            >
               You
             </span>
           {/if}
@@ -179,13 +200,15 @@
           <button
             class="action-button action-button--cancel"
             type="button"
-            aria-label="Cancel roll and take penalty"
+            aria-label="Take penalty"
             disabled={$session.processing.penalize}
             onclick={cancel}
           >
-            Pass
+            Penalty
           </button>
-        {:else if canPass}
+        {/if}
+
+        {#if canPass}
           <button
             class="action-button action-button--pass"
             type="button"
@@ -273,11 +296,23 @@
     border-inline-start: 0.08rem solid var(--surface-border);
   }
 
+  .side-panel--participants {
+    align-content: stretch;
+    grid-auto-rows: minmax(0, 1fr);
+    justify-items: center;
+  }
+
   .participant-slot,
   .die-option,
   .roll-button {
     width: min(100%, 3rem);
     aspect-ratio: 1;
+  }
+
+  .participant-slot {
+    width: 100%;
+    max-width: min(100%, 5.4rem);
+    align-self: center;
   }
 
   .participant-slot {
@@ -301,6 +336,8 @@
   }
 
   .participant-face {
+    --participant-face-inset: clamp(0.12rem, 0.45vmin, 0.2rem);
+
     position: relative;
     display: grid;
     place-items: center;
@@ -309,6 +346,7 @@
     width: 100%;
     height: 100%;
     box-sizing: border-box;
+    padding: var(--participant-face-inset);
     border: 0.12rem solid #858585;
     background: #ffffff;
     pointer-events: none;
@@ -323,31 +361,27 @@
 
   .participant-slot--active .participant-face {
     border-color: #2f6fed;
-    outline: 0.18rem solid rgb(47 111 237 / 0.28);
-    outline-offset: -0.32rem;
     background: #ffffff;
     box-shadow:
       inset 0 0.12rem 0.18rem rgb(255 255 255 / 0.7),
       inset 0 -0.12rem 0.24rem rgb(0 0 0 / 0.1);
   }
 
-  .participant-slot:not(.participant-slot--active) .participant-radio:checked + .participant-face {
+  .participant-slot--awaiting .participant-face {
     border-color: #111827;
-    outline: 0.16rem solid rgb(17 24 39 / 0.18);
-    outline-offset: -0.3rem;
   }
 
   .participant-radio:focus-visible + .participant-face {
     outline: 0.16rem solid #111827;
-    outline-offset: -0.24rem;
+    outline-offset: 0.12rem;
   }
 
   .participant-self-star {
     position: absolute;
-    inset-block-start: clamp(0.1rem, 0.45vmin, 0.18rem);
-    inset-inline-start: clamp(0.1rem, 0.45vmin, 0.18rem);
+    inset-block-start: clamp(0.12rem, 0.5vmin, 0.22rem);
+    inset-inline-start: clamp(0.12rem, 0.5vmin, 0.22rem);
     z-index: 1;
-    width: clamp(0.875rem, 2.1875vmin, 1.1875rem);
+    width: clamp(1.05rem, 2.65vmin, 1.45rem);
     aspect-ratio: 1;
     background: #f5c542;
     clip-path: polygon(
@@ -364,6 +398,35 @@
     );
     filter: drop-shadow(0 0.05rem 0.05rem rgb(0 0 0 / 0.28));
     pointer-events: none;
+  }
+
+  .participant-slot--awaiting .participant-face::after,
+  .participant-slot--ready .participant-face::after {
+    position: absolute;
+    inset-block-end: var(--participant-face-inset);
+    inset-inline: var(--participant-face-inset);
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    min-height: clamp(0.9rem, 2.25vmin, 1.2rem);
+    box-sizing: border-box;
+    padding: 0.16rem 0.24rem;
+    border: 0.08rem solid rgb(17 24 39 / 0.22);
+    background: rgb(255 255 255 / 0.94);
+    color: #111827;
+    font-size: clamp(0.52rem, 1.35vmin, 0.72rem);
+    font-weight: 800;
+    line-height: 1;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  .participant-slot--awaiting .participant-face::after {
+    content: "TURN";
+  }
+
+  .participant-slot--ready .participant-face::after {
+    content: "READY";
   }
 
   .participant-self-description {
@@ -500,7 +563,8 @@
   .action-bar {
     display: grid;
     grid-column: 1 / -1;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
     gap: 0;
     width: 100%;
     border-block-start: 0.08rem solid #eef0f4;
@@ -533,8 +597,6 @@
     --action-button-bg: var(--game-yellow);
     --action-button-color: #171717;
     --action-button-hover-bg: #d4ad22;
-
-    grid-column: 1;
   }
 
   .action-button--cancel,
@@ -542,17 +604,15 @@
     --action-button-bg: var(--game-orange);
     --action-button-color: #171717;
     --action-button-hover-bg: #c85818;
-
-    grid-column: 2;
-    border-inline-start: 0.08rem solid var(--surface-border);
   }
 
   .action-button--confirm {
     --action-button-bg: var(--game-purple);
     --action-button-color: #ffffff;
     --action-button-hover-bg: #4f386e;
+  }
 
-    grid-column: 3;
+  .action-button + .action-button {
     border-inline-start: 0.08rem solid var(--surface-border);
   }
 
@@ -616,6 +676,11 @@
     .die-option,
     .roll-button {
       width: min(100%, 2.15rem);
+    }
+
+    .participant-slot {
+      width: 100%;
+      max-width: min(100%, 3.4rem);
     }
 
     .action-button {
