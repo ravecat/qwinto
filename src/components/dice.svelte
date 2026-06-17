@@ -39,7 +39,9 @@
           aria-label="{color} die"
         />
 
-        <D6 {value} --color={dieFaces[color]} />
+        <span class="die-option-figure">
+          <D6 {value} --color={dieFaces[color]} />
+        </span>
       </label>
     {/each}
   </fieldset>
@@ -114,28 +116,32 @@
     cursor: default;
   }
 
-  .die-option :global(.die) {
+  .die-option-figure {
+    display: grid;
     grid-area: 1 / 1;
+    place-items: center;
+    width: 100%;
+    height: 100%;
   }
 
   @supports (width: min(100cqi, 100cqb)) {
-    .die-option :global(.die) {
+    .die-option-figure {
       width: min(100cqi, 100cqb);
       height: min(100cqi, 100cqb);
     }
   }
 
-  .die-option:has(.die-input:checked) :global(.die) {
+  .die-option:has(.die-input:checked) .die-option-figure {
     outline: 0.16rem solid rgb(51 56 64 / 0.24);
     outline-offset: 0.1rem;
   }
 
-  .dice-stack--can-roll .die-option:has(.die-input:checked) :global(.die),
-  .die-option:has(.die-input:focus-visible) :global(.die) {
+  .dice-stack--can-roll .die-option:has(.die-input:checked) .die-option-figure,
+  .die-option:has(.die-input:focus-visible) .die-option-figure {
     outline-color: var(--game-orange);
   }
 
-  .die-option:has(.die-input:focus-visible) :global(.die) {
+  .die-option:has(.die-input:focus-visible) .die-option-figure {
     outline-style: solid;
     outline-width: 0.16rem;
     outline-offset: 0.14rem;

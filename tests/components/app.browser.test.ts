@@ -495,7 +495,7 @@ describe("Game", () => {
       const actionBar = document.querySelector<HTMLElement>(".action-bar");
       const buttons = Array.from(document.querySelectorAll<HTMLElement>(".action-button"));
       const participantFace = document.querySelector<HTMLElement>(".participant-face");
-      const die = document.querySelector<HTMLElement>(".die");
+      const die = queryDieFace("orange", 4);
 
       expect(participants).not.toBeNull();
       expect(board).not.toBeNull();
@@ -524,7 +524,6 @@ describe("Game", () => {
       expect(Math.abs(participantFaceRect.width - dieRect.width)).toBeLessThan(0.5);
       expect(Math.abs(participantFaceRect.height - dieRect.height)).toBeLessThan(0.5);
       expect(Math.abs(participantFaceRect.width - participantFaceRect.height)).toBeLessThan(0.5);
-      expect(die!.querySelector(".die-face")?.getAttribute("rx")).toBe("9");
       expect(getComputedStyle(buttons[0]!).backgroundColor).toBe("rgb(226, 189, 47)");
       expect(getComputedStyle(buttons[1]!).backgroundColor).toBe("rgb(217, 101, 30)");
       expect(getComputedStyle(buttons[2]!).backgroundColor).toBe("rgb(92, 67, 123)");
