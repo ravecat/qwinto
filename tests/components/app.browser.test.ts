@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { render } from "vitest-browser-svelte";
 import "~/app.css";
 import App from "~/app.svelte";
-import { selectedSlot } from "~store/overlay.svelte";
+import { dice, selectedSlot } from "~store/overlay.svelte";
 import { visiblePlayerId } from "~store/session.svelte";
 import { player, sessionState } from "../fixtures";
 
@@ -45,6 +45,7 @@ function penalty(index: number) {
 describe("Game", () => {
   beforeEach(() => {
     sessionMock.reset();
+    dice.value = [];
     selectedSlot.value = null;
     visiblePlayerId.value = null;
   });
@@ -163,6 +164,12 @@ describe("Game", () => {
       const rollButton = screen.getByRole("button", {
         name: "Roll selected dice",
       });
+      const actionButtons = document.querySelectorAll<HTMLElement>(".action-bar .action-button");
+
+      expect(actionButtons).toHaveLength(1);
+      expect(actionButtons[0]?.textContent?.trim()).toBe("Roll");
+      expect(getComputedStyle(actionButtons[0]!).backgroundColor).toBe("rgb(92, 67, 123)");
+      expect(document.querySelector(".side-panel--dice .action-button")).toBeNull();
 
       await expect.element(rollButton).toBeDisabled();
       await expect.element(orangeDie).not.toBeChecked();
@@ -187,12 +194,11 @@ describe("Game", () => {
 
       const screen = await render(App);
       const orangeDie = screen.getByRole("checkbox", { name: "orange die" });
-      const rollButton = screen.getByRole("button", {
-        name: "Roll selected dice",
-      });
 
       await expect.element(orangeDie).toBeDisabled();
-      await expect.element(rollButton).toBeDisabled();
+      await expect
+        .element(screen.getByRole("button", { name: "Roll selected dice" }))
+        .not.toBeInTheDocument();
       await expect.element(orangeDie).not.toBeChecked();
     });
 
@@ -296,7 +302,9 @@ describe("Game", () => {
 
       await expect.element(orangeDie).not.toBeChecked();
       await expect.element(yellowDie).not.toBeChecked();
-      await expect.element(rollButton).toBeDisabled();
+      await expect
+        .element(screen.getByRole("button", { name: "Roll selected dice" }))
+        .not.toBeInTheDocument();
       await expect
         .element(screen.getByRole("radio", { name: "Show Bob sheet" }))
         .toHaveAttribute("aria-current", "true");
@@ -629,9 +637,7 @@ describe("Game", () => {
       const screen = await render(App);
 
       await expect.element(screen.getByRole("button", { name: "Reroll same dice" })).toBeEnabled();
-      await expect
-        .element(screen.getByRole("button", { name: "Take penalty" }))
-        .toBeEnabled();
+      await expect.element(screen.getByRole("button", { name: "Take penalty" })).toBeEnabled();
       await screen.getByRole("button", { name: "Select orange column 1" }).click();
       await expect
         .element(screen.getByRole("button", { name: "Confirm selected cell" }))

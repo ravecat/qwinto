@@ -1,14 +1,20 @@
 <script lang="ts">
-  import { selectedSlot } from "~store/overlay.svelte";
+  import { dice, selectedSlot } from "~store/overlay.svelte";
   import permissions from "~store/permissions";
   import { session } from "~store/session.svelte";
 
   const game = $derived($session.value?.game ?? null);
   const canWrite = $derived($permissions.can_write);
+  const canRoll = $derived($permissions.can_roll);
+  const canProcessRoll = $derived(canRoll && !$session.processing.roll);
   const canReroll = $derived($permissions.can_reroll);
   const canPenalize = $derived($permissions.can_penalize);
   const canPass = $derived($permissions.can_pass);
-  const hasAvailableActions = $derived(canReroll || canPenalize || canPass || canWrite);
+  const hasAvailableActions = $derived(canRoll || canReroll || canPenalize || canPass || canWrite);
+
+  function roll() {
+    session.roll({ colors: dice.value });
+  }
 
   function reroll() {
     session.reroll();
@@ -28,7 +34,19 @@
 </script>
 
 {#if hasAvailableActions}
-  <div class="action-bar" aria-label="Result actions">
+  <div class="action-bar" aria-label="Actions">
+    {#if canRoll}
+      <button
+        class="action-button action-button--roll"
+        type="button"
+        aria-label="Roll selected dice"
+        disabled={!canProcessRoll || dice.value.length === 0}
+        onclick={roll}
+      >
+        Roll
+      </button>
+    {/if}
+
     {#if canReroll}
       <button
         class="action-button action-button--reroll"
@@ -127,6 +145,7 @@
     --action-button-hover-bg: #c85818;
   }
 
+  .action-button--roll,
   .action-button--confirm {
     --action-button-bg: var(--game-purple);
     --action-button-color: #ffffff;

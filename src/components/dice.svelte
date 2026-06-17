@@ -1,12 +1,11 @@
 <script lang="ts">
   import type { DieColor } from "~/types/session";
+  import { dice } from "~store/overlay.svelte";
   import permissions from "~store/permissions";
   import { actionErrorMessage, session, timeoutErrorMessage } from "~store/session.svelte";
 
   const dieColors = ["orange", "yellow", "purple"] as const satisfies readonly DieColor[];
   const game = $derived($session.value?.game ?? null);
-
-  let dice = $derived(Object.keys(game?.dices ?? {}) as DieColor[]);
 
   const canSeeRoll = $derived(
     ($permissions.can_see_roll || $permissions.can_write) && Boolean(game?.sum),
@@ -14,10 +13,6 @@
   const canRoll = $derived($permissions.can_roll && !$session.processing.roll);
   const actionError = $derived(actionErrorMessage($session));
   const timeoutError = $derived(timeoutErrorMessage($session));
-
-  function roll() {
-    session.roll({ colors: dice });
-  }
 </script>
 
 <div class="side-panel side-panel--dice">
@@ -34,7 +29,7 @@
           class="die die--{color}"
           type="checkbox"
           name="dice"
-          bind:group={dice}
+          bind:group={dice.value}
           value={color}
           aria-label="{color} die"
         />
@@ -47,18 +42,6 @@
       </label>
     {/each}
   </fieldset>
-
-  {#if game?.phase === "roll"}
-    <button
-      class="roll-button"
-      type="button"
-      aria-label="Roll selected dice"
-      disabled={!canRoll || dice.length === 0}
-      onclick={roll}
-    >
-      Roll
-    </button>
-  {/if}
 
   {#if actionError}
     <p class="action-error" aria-live="polite">
@@ -90,8 +73,7 @@
     border-inline-start: 0.08rem solid var(--surface-border);
   }
 
-  .die-option,
-  .roll-button {
+  .die-option {
     width: min(100%, 3rem);
     aspect-ratio: 1;
   }
@@ -184,37 +166,6 @@
     text-shadow: 0 0.08rem 0.1rem rgb(0 0 0 / 0.34);
   }
 
-  .roll-button {
-    display: grid;
-    place-items: center;
-    padding: 0;
-    border: 0.12rem solid #858585;
-    border-radius: 0;
-    background: #ffffff;
-    color: #333840;
-    box-shadow:
-      inset 0 0.12rem 0.18rem rgb(255 255 255 / 0.72),
-      inset 0 -0.12rem 0.24rem rgb(0 0 0 / 0.12);
-    cursor: pointer;
-    font: inherit;
-    font-size: clamp(0.825rem, 2.25vmin, 1.08rem);
-    font-weight: 700;
-    line-height: 1;
-  }
-
-  .roll-button:hover:not(:disabled) {
-    background: #eef0f4;
-  }
-
-  .roll-button:active:not(:disabled) {
-    transform: translateY(0.04rem);
-  }
-
-  .roll-button:focus-visible {
-    outline: 0.16rem solid #2f6fed;
-    outline-offset: 0.14rem;
-  }
-
   .action-error {
     max-width: 100%;
     margin: 0;
@@ -231,8 +182,7 @@
       padding: 0.35rem;
     }
 
-    .die-option,
-    .roll-button {
+    .die-option {
       width: min(100%, 2.15rem);
     }
   }
