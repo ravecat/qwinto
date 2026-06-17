@@ -3,17 +3,9 @@
   import D6 from "~components/d6.svelte";
   import { dice } from "~store/overlay.svelte";
   import permissions from "~store/permissions";
-  import {
-    actionErrorMessage,
-    session,
-    timeoutErrorMessage,
-  } from "~store/session.svelte";
+  import { errors, session } from "~store/session.svelte";
 
-  const colors = [
-    "orange",
-    "yellow",
-    "purple",
-  ] as const satisfies readonly DieColor[];
+  const colors = ["orange", "yellow", "purple"] as const satisfies readonly DieColor[];
   const dieFaces = {
     orange: "var(--game-orange)",
     yellow: "var(--game-yellow)",
@@ -25,8 +17,6 @@
     ($permissions.can_see_roll || $permissions.can_write) && Boolean(game?.sum),
   );
   const canRoll = $derived($permissions.can_roll && !$session.processing.roll);
-  const actionError = $derived(actionErrorMessage($session));
-  const timeoutError = $derived(timeoutErrorMessage($session));
 </script>
 
 <div class="side-panel side-panel--dice">
@@ -54,13 +44,13 @@
     {/each}
   </fieldset>
 
-  {#if actionError}
+  {#if $errors.error}
     <p class="action-error" aria-live="polite">
-      {actionError}
+      {$errors.error}
     </p>
-  {:else if timeoutError}
+  {:else if $errors.timeout}
     <p class="action-error" aria-live="polite">
-      {timeoutError}
+      {$errors.timeout}
     </p>
   {/if}
 </div>
@@ -86,6 +76,8 @@
 
   .die-option {
     display: grid;
+    place-items: center;
+    container-type: size;
     width: min(100%, 3rem);
     aspect-ratio: 1;
     cursor: pointer;
@@ -124,6 +116,13 @@
 
   .die-option :global(.die) {
     grid-area: 1 / 1;
+  }
+
+  @supports (width: min(100cqi, 100cqb)) {
+    .die-option :global(.die) {
+      width: min(100cqi, 100cqb);
+      height: min(100cqi, 100cqb);
+    }
   }
 
   .die-option:has(.die-input:checked) :global(.die) {

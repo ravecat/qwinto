@@ -1,13 +1,6 @@
 import { shell } from "@rvct/d20sdk";
-import { fromStore } from "svelte/store";
-import type {
-  ActionError,
-  ActionFeedbackSnapshot,
-  DieColor,
-  EmptyOk,
-  Session,
-  Slot,
-} from "~/types/session";
+import { derived, fromStore } from "svelte/store";
+import type { ActionError, DieColor, EmptyOk, Session, Slot } from "~/types/session";
 
 const runtime = shell<Session>(
   {
@@ -50,34 +43,48 @@ export const session = runtime.session.extend(({ call }) => ({
 const sessionState = fromStore(session);
 
 let selectedVisiblePlayerId = $state<string | null>(null);
+let selectedVisiblePlayerPhase = $state<string | null>(null);
 
-export const visiblePlayerId = {
-  get value() {
-    return selectedVisiblePlayerId ?? sessionState.current.value?.self ?? null;
-  },
-  set value(playerId: string | null) {
-    selectedVisiblePlayerId = playerId;
-  },
+export type Errors = {
+  error: string | null;
+  timeout: string | null;
 };
 
-export function actionErrorMessage(snapshot: ActionFeedbackSnapshot): string | null {
-  for (const [bucket, error] of Object.entries(snapshot.errors)) {
-    if (error === null) {
+export const errors = derived(session, ($session): Errors => {
+  let error: string | null = null;
+
+  for (const [bucket, actionError] of Object.entries($session.errors)) {
+    if (actionError === null) {
       continue;
     }
 
-    return error.reason?.trim() || `${bucket} error`;
+    error = actionError.reason?.trim() || `${bucket} error`;
+    break;
   }
 
-  return null;
-}
+  let timeout: string | null = null;
 
-export function timeoutErrorMessage(snapshot: ActionFeedbackSnapshot): string | null {
-  for (const [bucket, timedOut] of Object.entries(snapshot.timeouts)) {
+  for (const [bucket, timedOut] of Object.entries($session.timeouts)) {
     if (timedOut) {
-      return `${bucket} timeout`;
+      timeout = `${bucket} timeout`;
+      break;
     }
   }
 
-  return null;
-}
+  return { error, timeout };
+});
+
+export const visiblePlayerId = {
+  get value() {
+    const currentSession = sessionState.current.value;
+    const currentPhase = currentSession?.game.phase ?? null;
+    const scopedPlayerId =
+      selectedVisiblePlayerPhase === currentPhase ? selectedVisiblePlayerId : null;
+
+    return scopedPlayerId ?? currentSession?.self ?? null;
+  },
+  set value(playerId: string | null) {
+    selectedVisiblePlayerId = playerId;
+    selectedVisiblePlayerPhase = sessionState.current.value?.game.phase ?? null;
+  },
+};

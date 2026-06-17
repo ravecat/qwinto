@@ -13,20 +13,55 @@ const sessionMock = await vi.hoisted(async () => {
 
 vi.mock("~store/session.svelte", async (importOriginal) => {
   const actual = await importOriginal<typeof import("~store/session.svelte")>();
-  const { fromStore, writable } = await import("svelte/store");
+  const { derived, fromStore, writable } = await import("svelte/store");
   const sessionState = fromStore(sessionMock.session);
   const selectedVisiblePlayerId = writable<string | null>(null);
   const selectedVisiblePlayerState = fromStore(selectedVisiblePlayerId);
+  const selectedVisiblePlayerPhase = writable<string | null>(null);
+  const selectedVisiblePlayerPhaseState = fromStore(selectedVisiblePlayerPhase);
+
+  const errors = derived(sessionMock.session, ($session) => {
+    let error: string | null = null;
+
+    for (const [bucket, actionError] of Object.entries($session.errors)) {
+      if (actionError === null) {
+        continue;
+      }
+
+      error = actionError.reason?.trim() || `${bucket} error`;
+      break;
+    }
+
+    let timeout: string | null = null;
+
+    for (const [bucket, timedOut] of Object.entries($session.timeouts)) {
+      if (timedOut) {
+        timeout = `${bucket} timeout`;
+        break;
+      }
+    }
+
+    return { error, timeout };
+  });
 
   return {
     ...actual,
     session: sessionMock.session,
+    errors,
     visiblePlayerId: {
       get value() {
-        return selectedVisiblePlayerState.current ?? sessionState.current.value?.self ?? null;
+        const currentSession = sessionState.current.value;
+        const currentPhase = currentSession?.game.phase ?? null;
+        const scopedPlayerId =
+          selectedVisiblePlayerPhaseState.current === currentPhase
+            ? selectedVisiblePlayerState.current
+            : null;
+
+        return scopedPlayerId ?? currentSession?.self ?? null;
       },
       set value(playerId: string | null) {
         selectedVisiblePlayerId.set(playerId);
+        selectedVisiblePlayerPhase.set(sessionState.current.value?.game.phase ?? null);
       },
     },
   };
@@ -95,6 +130,39 @@ describe("Game", () => {
       await expect.element(aliceSheet).not.toBeChecked();
       await expect.element(bobSheet).toBeChecked();
       expect(visiblePlayerId.value).toBe("bob");
+    });
+
+    test("returns the visible sheet to self when the turn context changes", async () => {
+      const players = {
+        alice: player.build({
+          rows: { orange: { 0: 1 }, yellow: {}, purple: {} },
+        }),
+        bob: player.build({
+          rows: { orange: { 0: 9 }, yellow: {}, purple: {} },
+        }),
+      };
+
+      sessionMock.set(sessionState.transient({ game: { phase: "roll", players } }).build());
+
+      const screen = await render(App);
+      const aliceSheet = screen.getByRole("radio", { name: "Show Alice sheet" });
+      const bobSheet = screen.getByRole("radio", { name: "Show Bob sheet" });
+
+      await bobSheet.click();
+
+      await expect.element(aliceSheet).not.toBeChecked();
+      await expect.element(bobSheet).toBeChecked();
+      expect(slot("orange", 0)?.querySelector("[data-slot-value]")?.textContent).toBe("9");
+      expect(visiblePlayerId.value).toBe("bob");
+
+      sessionMock.set(
+        sessionState.transient({ game: { phase: "write_or_pass", players } }).build(),
+      );
+
+      await expect.element(aliceSheet).toBeChecked();
+      await expect.element(bobSheet).not.toBeChecked();
+      expect(slot("orange", 0)?.querySelector("[data-slot-value]")?.textContent).toBe("1");
+      expect(visiblePlayerId.value).toBe("alice");
     });
 
     test("shows response labels from participant statuses", async () => {
@@ -456,7 +524,7 @@ describe("Game", () => {
       expect(Math.abs(participantFaceRect.width - dieRect.width)).toBeLessThan(0.5);
       expect(Math.abs(participantFaceRect.height - dieRect.height)).toBeLessThan(0.5);
       expect(Math.abs(participantFaceRect.width - participantFaceRect.height)).toBeLessThan(0.5);
-      expect(getComputedStyle(die!).borderRadius).toBe("10%");
+      expect(die!.querySelector(".die-face")?.getAttribute("rx")).toBe("9");
       expect(getComputedStyle(buttons[0]!).backgroundColor).toBe("rgb(226, 189, 47)");
       expect(getComputedStyle(buttons[1]!).backgroundColor).toBe("rgb(217, 101, 30)");
       expect(getComputedStyle(buttons[2]!).backgroundColor).toBe("rgb(92, 67, 123)");

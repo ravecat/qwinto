@@ -66,8 +66,3 @@ export type ActionError = {
 };
 
 export type EmptyOk = Record<string, never>;
-
-export type ActionFeedbackSnapshot = {
-  errors: Record<string, ActionError | null>;
-  timeouts: Record<string, boolean>;
-};
