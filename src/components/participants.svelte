@@ -87,6 +87,8 @@
   }
 
   .participant-slot {
+    --participant-slot-offset: 0;
+
     position: relative;
     display: grid;
     place-items: center;
@@ -95,6 +97,12 @@
     aspect-ratio: 1;
     align-self: center;
     cursor: pointer;
+    transform: translateX(var(--participant-slot-offset));
+    transition: transform 160ms ease;
+  }
+
+  .participant-slot:has(.participant-radio:checked) {
+    --participant-slot-offset: clamp(0.3rem, 1.2vmin, 0.5rem);
   }
 
   .participant-radio {
@@ -136,7 +144,6 @@
       inset 0 -0.12rem 0.24rem rgb(0 0 0 / 0.1);
   }
 
-  .participant-radio:checked + .participant-face,
   .participant-radio:focus-visible + .participant-face {
     border-color: var(--game-orange);
     border-width: 0.16rem;
@@ -226,6 +233,10 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
+    .participant-slot {
+      transition: none;
+    }
+
     .participant-status-label--waiting {
       animation: none;
       opacity: 1;
