@@ -26,8 +26,6 @@
       class="participant-slot participant-slot--occupied"
       class:participant-slot--active={member.active}
       class:participant-slot--self={member.self}
-      class:participant-slot--awaiting={member.status === "pending"}
-      class:participant-slot--ready={member.status === "wrote" || member.status === "skipped"}
     >
       <input
         class="participant-radio"
@@ -36,7 +34,6 @@
         bind:group={visiblePlayerId.value}
         value={member.id}
         aria-label="Show {member.label} sheet"
-        aria-describedby={member.self ? `participant-${member.id}-self` : undefined}
         aria-current={member.active ? "true" : undefined}
       />
 
@@ -59,11 +56,13 @@
         {#if member.self}
           <span class="participant-self-star"></span>
         {/if}
-      </span>
 
-      {#if member.self}
-        <span id="participant-{member.id}-self" class="participant-self-description"> You </span>
-      {/if}
+        {#if member.status === "pending"}
+          <span class="participant-status-label participant-status-label--waiting">TURN</span>
+        {:else if member.status === "wrote" || member.status === "skipped"}
+          <span class="participant-status-label">READY</span>
+        {/if}
+      </span>
     </label>
   {/each}
 </fieldset>
@@ -84,8 +83,6 @@
   }
 
   .side-panel--participants {
-    align-content: stretch;
-    grid-auto-rows: minmax(0, 1fr);
     justify-items: center;
   }
 
@@ -114,8 +111,6 @@
   }
 
   .participant-face {
-    --participant-face-inset: clamp(0.12rem, 0.45vmin, 0.2rem);
-
     position: relative;
     display: grid;
     place-items: center;
@@ -124,13 +119,10 @@
     width: 100%;
     height: 100%;
     box-sizing: border-box;
-    padding: var(--participant-face-inset);
-    border: 0.12rem solid #858585;
+    padding: 0.04rem;
+    border: 1px solid var(--surface-border);
     background: #ffffff;
     pointer-events: none;
-    box-shadow:
-      inset 0 0.12rem 0.18rem rgb(255 255 255 / 0.7),
-      inset 0 -0.12rem 0.24rem rgb(0 0 0 / 0.1);
   }
 
   .participant-slot--occupied .participant-face {
@@ -138,30 +130,26 @@
   }
 
   .participant-slot--active .participant-face {
-    border-color: #2f6fed;
     background: #ffffff;
     box-shadow:
       inset 0 0.12rem 0.18rem rgb(255 255 255 / 0.7),
       inset 0 -0.12rem 0.24rem rgb(0 0 0 / 0.1);
   }
 
-  .participant-slot--awaiting .participant-face {
-    border-color: #111827;
-  }
-
+  .participant-radio:checked + .participant-face,
   .participant-radio:focus-visible + .participant-face {
-    outline: 0.16rem solid #111827;
-    outline-offset: 0.12rem;
+    border-color: var(--game-orange);
+    border-width: 0.16rem;
   }
 
   .participant-self-star {
-    position: absolute;
-    inset-block-start: clamp(0.12rem, 0.5vmin, 0.22rem);
-    inset-inline-start: clamp(0.12rem, 0.5vmin, 0.22rem);
+    grid-area: 1 / 1;
+    align-self: start;
+    justify-self: start;
     z-index: 1;
     width: clamp(1.05rem, 2.65vmin, 1.45rem);
     aspect-ratio: 1;
-    background: #f5c542;
+    background: var(--game-orange);
     clip-path: polygon(
       50% 0,
       61% 35%,
@@ -178,18 +166,14 @@
     pointer-events: none;
   }
 
-  .participant-slot--awaiting .participant-face::after,
-  .participant-slot--ready .participant-face::after {
-    position: absolute;
-    inset-block-end: var(--participant-face-inset);
-    inset-inline: var(--participant-face-inset);
+  .participant-status-label {
+    grid-area: 1 / 1;
+    align-self: end;
+    justify-self: stretch;
     z-index: 2;
     display: grid;
     place-items: center;
     min-height: clamp(0.9rem, 2.25vmin, 1.2rem);
-    box-sizing: border-box;
-    padding: 0.16rem 0.24rem;
-    border: 0.08rem solid rgb(17 24 39 / 0.22);
     background: rgb(255 255 255 / 0.94);
     color: #111827;
     font-size: clamp(0.52rem, 1.35vmin, 0.72rem);
@@ -199,33 +183,31 @@
     white-space: nowrap;
   }
 
-  .participant-slot--awaiting .participant-face::after {
-    content: "TURN";
+  .participant-status-label--waiting {
+    animation: participant-status-label-waiting 1.6s ease-in-out infinite;
   }
 
-  .participant-slot--ready .participant-face::after {
-    content: "READY";
-  }
+  @keyframes participant-status-label-waiting {
+    0%,
+    100% {
+      opacity: 1;
+    }
 
-  .participant-self-description {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    border: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
+    50% {
+      opacity: 0;
+    }
   }
 
   .participant-avatar {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
 
   .participant-initial {
+    grid-area: 1 / 1;
     color: #5f636b;
     font-size: clamp(1rem, 2.6vmin, 1.35rem);
     font-weight: 700;
@@ -240,6 +222,13 @@
     .participant-slot {
       width: min(100%, 2.15rem);
       max-width: min(100%, 3.4rem);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .participant-status-label--waiting {
+      animation: none;
+      opacity: 1;
     }
   }
 </style>

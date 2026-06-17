@@ -152,7 +152,7 @@
 
   .dice-stack--can-roll .die:checked {
     border-color: #ffffff;
-    outline: 0.16rem solid #2f6fed;
+    outline: 0.16rem solid var(--game-orange);
     outline-offset: 0.1rem;
   }
 
@@ -167,7 +167,7 @@
   }
 
   .die:focus-visible {
-    outline: 0.16rem solid #2f6fed;
+    outline: 0.16rem solid var(--game-orange);
     outline-offset: 0.14rem;
   }
 

@@ -94,16 +94,13 @@ describe("Game", () => {
       const bobSlot = document
         .querySelector<HTMLInputElement>('input[aria-label="Show Bob sheet"]')
         ?.closest(".participant-slot");
+      const aliceLabel = aliceSlot?.querySelector(".participant-status-label");
+      const bobLabel = bobSlot?.querySelector(".participant-status-label");
 
-      expect(aliceSlot?.classList.contains("participant-slot--awaiting")).toBe(true);
-      expect(getComputedStyle(aliceSlot!.querySelector(".participant-face")!, "::after").content).toBe(
-        '"TURN"',
-      );
-      expect(bobSlot?.classList.contains("participant-slot--ready")).toBe(true);
-      expect(getComputedStyle(bobSlot!.querySelector(".participant-face")!, "::after").content).toBe(
-        '"READY"',
-      );
-      expect(document.querySelector(".participant-status-label")).toBeNull();
+      expect(aliceLabel?.textContent).toBe("TURN");
+      expect(aliceLabel?.classList.contains("participant-status-label--waiting")).toBe(true);
+      expect(bobLabel?.textContent).toBe("READY");
+      expect(bobLabel?.classList.contains("participant-status-label--waiting")).toBe(false);
     });
 
     test("marks the opened session player with a star instead of the active player", async () => {
@@ -129,11 +126,8 @@ describe("Game", () => {
 
       await expect.element(aliceSheet).toHaveAttribute("aria-current", "true");
       await expect.element(bobSheet).not.toHaveAttribute("aria-current", "true");
-      await expect.element(aliceSheet).not.toHaveAttribute("aria-describedby");
-      await expect.element(bobSheet).toHaveAttribute("aria-describedby", "participant-bob-self");
       await expect.element(bobSheet).toBeChecked();
       expect(stars).toHaveLength(1);
-      expect(document.getElementById("participant-bob-self")?.textContent?.trim()).toBe("You");
       expect(aliceSlot?.querySelector(".participant-self-star")).toBeNull();
       expect(bobSlot?.classList.contains("participant-slot--self")).toBe(true);
       expect(bobSlot?.querySelector(".participant-self-star")).toBe(stars[0]);
