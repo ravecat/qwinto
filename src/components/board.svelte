@@ -99,7 +99,7 @@
           value ?? (canSelectSlot && available && selected ? (game?.sum ?? undefined) : undefined)}
 
         <g data-row={row} data-col={col}>
-          {#if available}
+          {#if canSelectSlot && available}
             <rect
               data-slot-ring
               class="slot-available-ring"
