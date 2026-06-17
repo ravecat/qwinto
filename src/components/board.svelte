@@ -23,6 +23,10 @@
   const groupTranslateY = 5.016;
   const slotSize = 43.228;
   const slotRadius = 7.856;
+  const slotRingStrokeWidth = 3.2;
+  const slotRingInset = slotRingStrokeWidth / 2;
+  const slotRingSize = slotSize - slotRingStrokeWidth;
+  const slotRingRadius = slotRadius - slotRingInset;
   const penaltyMarkRadius = 9.6;
 
   const slots: BoardSlot[] = [
@@ -90,6 +94,8 @@
         {@const available = availableSlots.some((slot) => slot.row === row && slot.slot === col)}
         {@const selected = selectedSlot.value?.row === row && selectedSlot.value.slot === col}
         {@const value = sheet?.[row]?.[col]}
+        {@const displayValue =
+          value ?? (canSelectSlot && available && selected ? (game?.sum ?? undefined) : undefined)}
 
         <g data-row={row} data-col={col}>
           {#if available}
@@ -97,16 +103,17 @@
               data-slot-ring
               class="slot-available-ring"
               class:slot-available-ring--selected={selected}
-              {x}
-              {y}
-              width={slotSize}
-              height={slotSize}
-              rx={slotRadius}
-              ry={slotRadius}
+              x={x + slotRingInset}
+              y={y + slotRingInset}
+              width={slotRingSize}
+              height={slotRingSize}
+              rx={slotRingRadius}
+              ry={slotRingRadius}
+              stroke-width={slotRingStrokeWidth}
             />
           {/if}
 
-          {#if value !== undefined}
+          {#if displayValue !== undefined}
             <text
               data-slot-value
               class="slot-value"
@@ -115,7 +122,7 @@
               text-anchor="middle"
               dominant-baseline="central"
             >
-              {value}
+              {displayValue}
             </text>
           {/if}
         </g>
@@ -192,7 +199,6 @@
   .slot-available-ring {
     fill: none;
     stroke: #2f6fed;
-    stroke-width: 3.2;
   }
 
   .slot-available-ring--selected {
