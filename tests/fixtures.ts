@@ -1,6 +1,6 @@
 import { Factory } from "fishery";
 import type { Game, Member, Permissions, Player, Session } from "~/types/session";
-import type { session as runtimeSession } from "~store/session";
+import type { session as runtimeSession } from "~store/session.svelte";
 
 type SessionState = Parameters<Parameters<typeof runtimeSession.subscribe>[0]>[0];
 

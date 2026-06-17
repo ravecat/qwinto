@@ -1,4 +1,5 @@
 import { shell } from "@rvct/d20sdk";
+import { fromStore } from "svelte/store";
 import type {
   ActionError,
   ActionFeedbackSnapshot,
@@ -45,6 +46,19 @@ export const session = runtime.session.extend(({ call }) => ({
     return call<EmptyOk, ActionError>("penalize", {});
   },
 }));
+
+const sessionState = fromStore(session);
+
+let selectedVisiblePlayerId = $state<string | null>(null);
+
+export const visiblePlayerId = {
+  get value() {
+    return selectedVisiblePlayerId ?? sessionState.current.value?.self ?? null;
+  },
+  set value(playerId: string | null) {
+    selectedVisiblePlayerId = playerId;
+  },
+};
 
 export function actionErrorMessage(snapshot: ActionFeedbackSnapshot): string | null {
   for (const [bucket, error] of Object.entries(snapshot.errors)) {

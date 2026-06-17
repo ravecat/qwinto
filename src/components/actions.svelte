@@ -1,7 +1,7 @@
 <script lang="ts">
   import { selectedSlot } from "~store/overlay.svelte";
   import permissions from "~store/permissions";
-  import { session } from "~store/session";
+  import { session } from "~store/session.svelte";
 
   const game = $derived($session.value?.game ?? null);
   const canWrite = $derived($permissions.can_write);

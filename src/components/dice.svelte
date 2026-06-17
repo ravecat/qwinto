@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { DieColor } from "~/types/session";
   import permissions from "~store/permissions";
-  import { actionErrorMessage, session, timeoutErrorMessage } from "~store/session";
+  import { actionErrorMessage, session, timeoutErrorMessage } from "~store/session.svelte";
 
   const dieColors = ["orange", "yellow", "purple"] as const satisfies readonly DieColor[];
   const game = $derived($session.value?.game ?? null);

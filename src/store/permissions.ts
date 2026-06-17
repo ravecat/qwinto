@@ -1,6 +1,6 @@
 import { derived, type Readable } from "svelte/store";
 import type { Permissions } from "~/types/session";
-import { session } from "~store/session";
+import { session } from "~store/session.svelte";
 
 const permissions: Readable<Permissions> = derived(session, ($session) => ({
   can_start_game: false,

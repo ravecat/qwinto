@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { visiblePlayerId } from "~store/overlay.svelte";
-  import { session } from "~store/session";
+  import { session, visiblePlayerId } from "~store/session.svelte";
 
   const game = $derived($session.value?.game ?? null);
 

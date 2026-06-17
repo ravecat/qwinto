@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { render } from "vitest-browser-svelte";
 import "~/app.css";
 import App from "~/app.svelte";
-import { selectedSlot, visiblePlayerId } from "~store/overlay.svelte";
+import { selectedSlot } from "~store/overlay.svelte";
+import { visiblePlayerId } from "~store/session.svelte";
 import { player, sessionState } from "../fixtures";
 
 const sessionMock = await vi.hoisted(async () => {
@@ -10,12 +11,24 @@ const sessionMock = await vi.hoisted(async () => {
   return createSessionMock();
 });
 
-vi.mock("~store/session", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("~store/session")>();
+vi.mock("~store/session.svelte", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("~store/session.svelte")>();
+  const { fromStore, writable } = await import("svelte/store");
+  const sessionState = fromStore(sessionMock.session);
+  const selectedVisiblePlayerId = writable<string | null>(null);
+  const selectedVisiblePlayerState = fromStore(selectedVisiblePlayerId);
 
   return {
     ...actual,
     session: sessionMock.session,
+    visiblePlayerId: {
+      get value() {
+        return selectedVisiblePlayerState.current ?? sessionState.current.value?.self ?? null;
+      },
+      set value(playerId: string | null) {
+        selectedVisiblePlayerId.set(playerId);
+      },
+    },
   };
 });
 

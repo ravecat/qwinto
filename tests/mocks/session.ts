@@ -1,6 +1,6 @@
 import { atom } from "nanostores";
 import { vi } from "vitest";
-import type { session as runtimeSession } from "~store/session";
+import type { session as runtimeSession } from "~store/session.svelte";
 
 type SessionState = Parameters<Parameters<typeof runtimeSession.subscribe>[0]>[0];
 
