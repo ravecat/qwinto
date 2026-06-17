@@ -1,8 +1,9 @@
 <script lang="ts">
   import board from "~assets/board.svg";
+  import type { Slot } from "~/types/session";
   import permissions from "~store/permissions";
   import { selectedSlot, selectSlot, visiblePlayerId } from "~store/overlay.svelte";
-  import { session, type Slot } from "~store/session";
+  import { session } from "~store/session";
 
   type BoardSlot = {
     row: Slot["row"];

@@ -1,5 +1,6 @@
 import { fromStore } from "svelte/store";
-import { session, type Slot } from "~store/session";
+import type { Slot } from "~/types/session";
+import { session } from "~store/session";
 
 const sessionState = fromStore(session);
 
