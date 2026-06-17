@@ -42,6 +42,18 @@ function penalty(index: number) {
   return document.querySelector(`[aria-label="Qwinto game board"] [data-penalty="${index}"]`);
 }
 
+function queryDieFace(color: string, value: number) {
+  return document.querySelector<HTMLElement>(
+    `.side-panel--dice [data-die-color="${color}"] [data-die-value="${value}"]`,
+  );
+}
+
+function dieFace(color: string, value: number) {
+  const element = queryDieFace(color, value);
+  expect(element).not.toBeNull();
+  return element!;
+}
+
 describe("Game", () => {
   beforeEach(() => {
     sessionMock.reset();
@@ -294,8 +306,8 @@ describe("Game", () => {
 
       await expect.element(orangeDie).toBeChecked();
       await expect.element(yellowDie).toBeChecked();
-      await expect.element(screen.getByText("2")).toBeVisible();
-      await expect.element(screen.getByText("5")).toBeVisible();
+      await expect.element(dieFace("orange", 2)).toBeVisible();
+      await expect.element(dieFace("yellow", 5)).toBeVisible();
       await expect.element(screen.getByLabelText("Rolled sum 7")).not.toBeInTheDocument();
 
       sessionMock.set(sessionState.transient({ game: { phase: "roll", cursor: 1 } }).build());
@@ -360,8 +372,8 @@ describe("Game", () => {
       await expect.element(orangeDie).toBeChecked();
       await expect.element(yellowDie).not.toBeChecked();
       await expect.element(purpleDie).toBeChecked();
-      await expect.element(screen.getByText("4")).toBeVisible();
-      await expect.element(screen.getByText("5")).toBeVisible();
+      await expect.element(dieFace("orange", 4)).toBeVisible();
+      await expect.element(dieFace("purple", 5)).toBeVisible();
       await expect.element(orangeDie).toBeDisabled();
       await expect.element(rerollButton).toBeEnabled();
       await expect.element(cancelButton).toBeEnabled();
@@ -444,9 +456,7 @@ describe("Game", () => {
       expect(Math.abs(participantFaceRect.width - dieRect.width)).toBeLessThan(0.5);
       expect(Math.abs(participantFaceRect.height - dieRect.height)).toBeLessThan(0.5);
       expect(Math.abs(participantFaceRect.width - participantFaceRect.height)).toBeLessThan(0.5);
-      expect(getComputedStyle(participantFace!).borderRadius).toBe(
-        getComputedStyle(die!).borderRadius,
-      );
+      expect(getComputedStyle(die!).borderRadius).toBe("10%");
       expect(getComputedStyle(buttons[0]!).backgroundColor).toBe("rgb(226, 189, 47)");
       expect(getComputedStyle(buttons[1]!).backgroundColor).toBe("rgb(217, 101, 30)");
       expect(getComputedStyle(buttons[2]!).backgroundColor).toBe("rgb(92, 67, 123)");
@@ -491,7 +501,7 @@ describe("Game", () => {
 
       const screen = await render(App);
 
-      await expect.element(screen.getByText("4")).toBeVisible();
+      await expect.element(dieFace("orange", 4)).toBeVisible();
       await expect.element(screen.getByLabelText("Rolled sum 4")).not.toBeInTheDocument();
       await expect
         .element(screen.getByRole("button", { name: "Reroll same dice" }))
@@ -525,8 +535,8 @@ describe("Game", () => {
         name: "Confirm selected cell with result 8",
       });
 
-      await expect.element(screen.getByText("3")).toBeVisible();
-      await expect.element(screen.getByText("5")).toBeVisible();
+      await expect.element(dieFace("orange", 3)).toBeVisible();
+      await expect.element(dieFace("yellow", 5)).toBeVisible();
       await expect.element(screen.getByText("8")).toBeVisible();
       await expect.element(confirmButton).toBeDisabled();
       await screen.getByRole("button", { name: "Select orange column 1" }).click();
@@ -662,7 +672,7 @@ describe("Game", () => {
 
       const screen = await render(App);
 
-      await expect.element(screen.getByText("2")).toBeVisible();
+      await expect.element(dieFace("purple", 2)).toBeVisible();
       await expect.element(screen.getByLabelText("Rolled sum 2")).not.toBeInTheDocument();
       await expect
         .element(screen.getByRole("button", { name: "Reroll same dice" }))
@@ -693,7 +703,7 @@ describe("Game", () => {
       const orangeDie = screen.getByRole("checkbox", { name: "orange die" });
 
       await expect.element(screen.getByLabelText("Rolled sum 3")).not.toBeInTheDocument();
-      await expect.element(screen.getByText("3")).not.toBeInTheDocument();
+      expect(queryDieFace("orange", 3)).toBeNull();
       await expect.element(orangeDie).toBeChecked();
     });
 
@@ -933,7 +943,7 @@ describe("Game", () => {
 
       const screen = await render(App);
 
-      await expect.element(screen.getByText("6")).toBeVisible();
+      await expect.element(dieFace("yellow", 6)).toBeVisible();
       await expect.element(screen.getByLabelText("Rolled sum 6")).not.toBeInTheDocument();
       await expect.element(screen.getByRole("checkbox", { name: "yellow die" })).toBeChecked();
       await expect.element(screen.getByRole("checkbox", { name: "orange die" })).not.toBeChecked();

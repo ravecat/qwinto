@@ -1,12 +1,26 @@
 <script lang="ts">
   import type { DieColor } from "~/types/session";
+  import D6 from "~components/d6.svelte";
   import { dice } from "~store/overlay.svelte";
   import permissions from "~store/permissions";
-  import { actionErrorMessage, session, timeoutErrorMessage } from "~store/session.svelte";
+  import {
+    actionErrorMessage,
+    session,
+    timeoutErrorMessage,
+  } from "~store/session.svelte";
 
-  const dieColors = ["orange", "yellow", "purple"] as const satisfies readonly DieColor[];
+  const colors = [
+    "orange",
+    "yellow",
+    "purple",
+  ] as const satisfies readonly DieColor[];
+  const dieFaces = {
+    orange: "var(--game-orange)",
+    yellow: "var(--game-yellow)",
+    purple: "var(--game-purple)",
+  } satisfies Record<DieColor, string>;
+
   const game = $derived($session.value?.game ?? null);
-
   const canSeeRoll = $derived(
     ($permissions.can_see_roll || $permissions.can_write) && Boolean(game?.sum),
   );
@@ -19,14 +33,15 @@
   <fieldset
     class="dice-stack"
     class:dice-stack--can-roll={canRoll}
-    class:dice-stack--can-see-roll={canSeeRoll}
     disabled={!canRoll}
     aria-label="Dice"
   >
-    {#each dieColors as color (color)}
-      <label class="die-option">
+    {#each colors as color (color)}
+      {@const value = canSeeRoll ? game?.dices[color] : undefined}
+
+      <label class="die-option" data-die-color={color}>
         <input
-          class="die die--{color}"
+          class="die-input"
           type="checkbox"
           name="dice"
           bind:group={dice.value}
@@ -34,11 +49,7 @@
           aria-label="{color} die"
         />
 
-        {#if canSeeRoll && game?.dices[color]}
-          <span class="die-value" aria-hidden="true">
-            {game.dices[color]}
-          </span>
-        {/if}
+        <D6 {value} --color={dieFaces[color]} />
       </label>
     {/each}
   </fieldset>
@@ -74,8 +85,10 @@
   }
 
   .die-option {
+    display: grid;
     width: min(100%, 3rem);
     aspect-ratio: 1;
+    cursor: pointer;
   }
 
   .dice-stack {
@@ -89,81 +102,44 @@
     margin: 0;
   }
 
-  .die-option {
-    display: grid;
-    cursor: pointer;
-  }
-
-  .die {
-    grid-area: 1 / 1;
-    display: grid;
-    place-items: center;
-    width: 100%;
-    height: 100%;
-    box-sizing: border-box;
-    padding: 0;
-    border: 0.12rem solid transparent;
-    margin: 0;
-    -webkit-appearance: none;
-    appearance: none;
-    color: #ffffff;
-    box-shadow:
-      inset 0 0.12rem 0.18rem rgb(255 255 255 / 0.24),
-      inset 0 -0.12rem 0.24rem rgb(0 0 0 / 0.22);
-    cursor: pointer;
-    font: inherit;
-    font-size: clamp(1rem, 2.6vmin, 1.35rem);
-    font-weight: 800;
-    line-height: 1;
-  }
-
-  .die:disabled {
+  .dice-stack:disabled .die-option {
     cursor: default;
   }
 
-  .die--orange {
-    background: var(--game-orange);
+  .die-input {
+    z-index: 1;
+    grid-area: 1 / 1;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    margin: 0;
+    cursor: pointer;
+    opacity: 0;
   }
 
-  .die--yellow {
-    background: var(--game-yellow);
+  .die-input:disabled {
+    cursor: default;
   }
 
-  .die--purple {
-    background: var(--game-purple);
+  .die-option :global(.die) {
+    grid-area: 1 / 1;
   }
 
-  .dice-stack--can-roll .die:checked {
-    border-color: #ffffff;
-    outline: 0.16rem solid var(--game-orange);
-    outline-offset: 0.1rem;
-  }
-
-  .dice-stack:not(.dice-stack--can-roll) .die:checked {
-    border-color: #ffffff;
+  .die-option:has(.die-input:checked) :global(.die) {
     outline: 0.16rem solid rgb(51 56 64 / 0.24);
     outline-offset: 0.1rem;
   }
 
-  .dice-stack--can-see-roll:not(.dice-stack--can-roll) .die:not(:checked) {
-    opacity: 0.36;
+  .dice-stack--can-roll .die-option:has(.die-input:checked) :global(.die),
+  .die-option:has(.die-input:focus-visible) :global(.die) {
+    outline-color: var(--game-orange);
   }
 
-  .die:focus-visible {
-    outline: 0.16rem solid var(--game-orange);
+  .die-option:has(.die-input:focus-visible) :global(.die) {
+    outline-style: solid;
+    outline-width: 0.16rem;
     outline-offset: 0.14rem;
-  }
-
-  .die-value {
-    z-index: 1;
-    grid-area: 1 / 1;
-    place-self: center;
-    color: #ffffff;
-    font-size: clamp(1rem, 2.6vmin, 1.35rem);
-    font-weight: 800;
-    line-height: 1;
-    pointer-events: none;
-    text-shadow: 0 0.08rem 0.1rem rgb(0 0 0 / 0.34);
   }
 
   .action-error {
