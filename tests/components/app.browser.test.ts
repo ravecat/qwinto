@@ -512,6 +512,44 @@ describe("Game", () => {
       await expect.element(confirmButton).toBeEnabled();
     });
 
+    test("toggles the selected slot off when clicked again", async () => {
+      sessionMock.set(
+        sessionState
+          .transient({
+            game: {
+              phase: "write_or_pass",
+              dices: { orange: 3, yellow: 5 },
+              sum: 8,
+              attempt: 1,
+            },
+            permissions: { can_write: true },
+            session: { available_slots: [{ row: "orange", slot: 0 }] },
+          })
+          .build(),
+      );
+
+      const screen = await render(App);
+      const slotButton = screen.getByRole("button", { name: "Select orange column 1" });
+      const confirmButton = screen.getByRole("button", {
+        name: "Confirm selected cell with result 8",
+      });
+
+      await expect.element(slotButton).toHaveAttribute("aria-pressed", "false");
+      await expect.element(confirmButton).toBeDisabled();
+
+      await slotButton.click();
+
+      expect(selectedSlot.value).toEqual({ row: "orange", slot: 0 });
+      await expect.element(slotButton).toHaveAttribute("aria-pressed", "true");
+      await expect.element(confirmButton).toBeEnabled();
+
+      await slotButton.click();
+
+      expect(selectedSlot.value).toBeNull();
+      await expect.element(slotButton).toHaveAttribute("aria-pressed", "false");
+      await expect.element(confirmButton).toBeDisabled();
+    });
+
     test("disables confirm while write is processing", async () => {
       sessionMock.set(
         sessionState

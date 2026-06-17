@@ -19,5 +19,6 @@ export const visiblePlayerId = {
 };
 
 export function selectSlot({ row, slot }: Slot) {
-  selectedSlot.value = { row, slot };
+  const current = selectedSlot.value;
+  selectedSlot.value = current?.row === row && current.slot === slot ? null : { row, slot };
 }
