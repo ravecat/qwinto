@@ -1,0 +1,59 @@
+kind: Build
+type: container
+name: qwinto
+spec:
+  targetStage:
+    $if: ${this.mode == "sync"}
+    $then: development
+include:
+  - .dockerignore
+  - Dockerfile
+  - assets/**/*
+  - manifests/**/*
+  - flake.lock
+  - flake.nix
+  - index.html
+  - justfile
+  - package.json
+  - pnpm-lock.yaml
+  - src/**/*
+  - svelte.config.js
+  - tsconfig.json
+  - vite.config.ts
+---
+kind: Deploy
+type: kubernetes
+name: qwinto
+dependencies:
+  - build.qwinto
+spec:
+  manifestTemplates:
+    - manifests/*.yaml
+  defaultTarget:
+    kind: Deployment
+    name: qwinto
+    containerName: qwinto
+  sync:
+    paths:
+      - sourcePath: .
+        containerPath: /app
+        mode: one-way-replica
+        exclude:
+          - .direnv
+          - .pnpm-store
+          - .vitest-attachments
+          - dist
+          - node_modules
+    overrides:
+      - command:
+          - nix
+        args:
+          - develop
+          - --command
+          - pnpm
+          - exec
+          - vite
+          - --host
+          - 0.0.0.0
+          - --port
+          - "80"
