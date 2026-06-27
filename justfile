@@ -15,6 +15,12 @@ serve host="127.0.0.1":
     just setup
     just start --host "{{host}}"
 
+up:
+    docker compose up --build
+
+down:
+    docker compose down
+
 build:
     {{ runner }} exec vite build
 

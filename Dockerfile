@@ -19,7 +19,7 @@ FROM development AS build
 
 RUN nix develop --command pnpm exec vite build
 
-FROM nginx:1.30.3-alpine3.23-slim AS runtime
+FROM nginx:1.30.3-alpine3.23-slim
 
 COPY --from=build /app/dist /usr/share/nginx/html
 

@@ -60,6 +60,34 @@ Open [http://localhost:5173](http://localhost:5173).
 The Vite server uses `VITE_PORT` or defaults to `5173`. The server is configured with
 `strictPort: true`, so choose another port explicitly if `5173` is already in use.
 
+## Local Module Development
+
+Use this workflow when developing a D20 iframe module together with a local D20 shell.
+The shell owns the shared Traefik entrypoint and external Docker network; each module
+repository joins that network and publishes its own slug-based host.
+
+Start the local shell first from wherever that repository lives:
+
+```sh
+just up
+```
+
+Then start this module repository:
+
+```sh
+just up
+```
+
+Open [http://localhost:5000](http://localhost:5000). D20 derives iframe URLs from the
+module slug and the shell request host. A module with slug `<module-slug>` resolves to
+`http://<module-slug>.localhost` when the shell is opened at `localhost:5000`.
+
+For a module repository, the local Compose contract is:
+
+- Join the external Docker network named `d20`.
+- Register a Traefik router whose host matches the module slug, such as ``Host(`<module-slug>.localhost`)``.
+- Route that host to the module development server port. For this Vite-based module, the default port is `5173`.
+
 ## Stack
 
 | Area                    | Version source files         |
@@ -80,9 +108,11 @@ the template.
 
 | Command          | Purpose                                          |
 | ---------------- | ------------------------------------------------ |
-| `just setup`     | Install project dependencies.                    |
-| `just start`     | Start the Vite development server.               |
-| `just serve`     | Install dependencies and start the Vite server.  |
+| `just up`        | Start this module's Vite service through Compose. |
+| `just down`      | Stop the Compose service.                         |
+| `just setup`     | Install project dependencies.                     |
+| `just start`     | Start the Vite development server.                |
+| `just serve`     | Install dependencies and start the Vite server.   |
 | `just build`     | Build the app for production.                    |
 | `just check`     | Run formatting checks, linting, and type checks. |
 | `just format`    | Format source files.                             |

@@ -26,6 +26,8 @@
         {
           default = pkgs.mkShellNoCC {
             buildInputs = with pkgs; [
+              docker-client
+              docker-compose
               git
               just
               nodejs_24

@@ -8,9 +8,6 @@ const root = fileURLToPath(new URL(".", import.meta.url));
 
 export default defineConfig({
   server: {
-    watch: {
-      usePolling: true,
-    },
     port: parseInt(process.env.VITE_PORT || "5173", 10),
     strictPort: true,
   },
