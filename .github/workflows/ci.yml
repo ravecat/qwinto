@@ -49,14 +49,6 @@ jobs:
       - name: Build project
         run: just build
 
-      - name: Write release metadata
-        if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
-        run: |
-          printf '{"slug":"%s","sha":"%s","repository":"%s"}\n' \
-            "${{ github.event.repository.name }}" \
-            "$GITHUB_SHA" \
-            "$GITHUB_REPOSITORY" > dist/release.json
-
       - name: Pack build archive
         if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
         run: tar -czf dist.tar.gz -C dist .
@@ -121,6 +113,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: checks
     if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
+    outputs:
+      ref: ${{ steps.static-artifact.outputs.ref }}
+      digest: ${{ steps.static-artifact.outputs.digest }}
     defaults:
       run:
         shell: bash --noprofile --norc -eo pipefail {0}
@@ -132,7 +127,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ${{ github.event.repository.name }}-dist-${{ needs.checks.outputs.release_short_sha }}
-          path: .workflow/static
+          path: .
 
       - uses: oras-project/setup-oras@v1
 
@@ -144,18 +139,47 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push immutable static artifact
+        id: static-artifact
         env:
           STATIC_ARTIFACT_TYPE: application/vnd.${{ github.event.repository.name }}.static.v1
           STATIC_MEDIA_TYPE: application/vnd.${{ github.event.repository.name }}.static.v1.tar+gzip
         run: |
           static_artifact="${REGISTRY}/${GITHUB_REPOSITORY_OWNER}/static/${{ github.event.repository.name }}"
+          static_ref="${static_artifact}:${GITHUB_SHA}"
           oras push \
             --artifact-type "$STATIC_ARTIFACT_TYPE" \
-            "$static_artifact:$GITHUB_SHA" \
-            ".workflow/static/dist.tar.gz:$STATIC_MEDIA_TYPE"
-          oras tag "$static_artifact:$GITHUB_SHA" "${{ needs.checks.outputs.release_short_sha }}"
+            "$static_ref" \
+            "dist.tar.gz:$STATIC_MEDIA_TYPE"
+          digest="$(oras resolve "$static_ref")"
+          oras tag "$static_ref" "${{ needs.checks.outputs.release_short_sha }}"
+
+          {
+            echo "ref=$static_ref"
+            echo "digest=$digest"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Push latest static channel
-        run: |
-          static_artifact="${REGISTRY}/${GITHUB_REPOSITORY_OWNER}/static/${{ github.event.repository.name }}"
-          oras tag "$static_artifact:$GITHUB_SHA" latest
+        run: oras tag "${{ steps.static-artifact.outputs.ref }}" latest
+
+  dispatch:
+    name: Notify infra static deployment
+    runs-on: ubuntu-latest
+    needs: static
+    if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
+    permissions:
+      contents: read
+    steps:
+      - name: Notify infra static deployment
+        uses: peter-evans/repository-dispatch@v4
+        with:
+          token: ${{ secrets.INFRA_DISPATCH_TOKEN }}
+          repository: ravecat/infra
+          event-type: static-artifact-published
+          client-payload: |-
+            {
+              "project": ${{ toJSON(github.event.repository.name) }},
+              "ref": ${{ toJSON(needs.static.outputs.ref) }},
+              "digest": ${{ toJSON(needs.static.outputs.digest) }},
+              "sha": ${{ toJSON(github.sha) }},
+              "message": ${{ toJSON(github.event.head_commit.message) }}
+            }
