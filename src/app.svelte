@@ -25,7 +25,7 @@
     overflow: clip;
     width: 100%;
     height: 100vh;
-    padding: clamp(0.5rem, 1.8vmin, 1rem);
+    padding: 0;
   }
 
   @supports (height: 100svh) {
@@ -42,28 +42,16 @@
       minmax(3.75rem, 0.16fr);
     grid-template-rows: minmax(0, auto) auto;
     align-items: stretch;
-    width: min(100%, calc((100vh - 2rem) * 2.35), 68rem);
-    border: 0.08rem solid var(--surface-border);
+    width: 100%;
     border-radius: 0;
     background: #ffffff;
   }
 
-  @supports (height: 100svh) {
-    .play-surface {
-      width: min(100%, calc((100svh - 2rem) * 2.35), 68rem);
-    }
-  }
-
   .board-frame {
     min-width: 0;
-    border-inline-start: 0.08rem solid var(--surface-border);
   }
 
   @media (max-width: 640px) {
-    .game {
-      padding: 0.5rem;
-    }
-
     .play-surface {
       grid-template-columns:
         minmax(2.6rem, 0.18fr)

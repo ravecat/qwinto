@@ -72,10 +72,6 @@
     list-style: none;
   }
 
-  .side-panel--dice {
-    border-inline-start: 0.08rem solid var(--surface-border);
-  }
-
   .die-option {
     display: grid;
     place-items: center;
