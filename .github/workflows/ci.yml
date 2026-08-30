@@ -49,6 +49,24 @@ jobs:
       - name: Build project
         run: just build
 
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run Vitest browser, Storybook, and visual tests
+        id: vitest-tests
+        run: just test --reporter=html
+
+      - name: Upload Vitest failure report
+        if: failure() && steps.vitest-tests.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: vitest-report
+          path: |
+            .vitest/
+            .vitest-attachments/
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Pack build archive
         if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
         run: tar -czf dist.tar.gz -C dist .

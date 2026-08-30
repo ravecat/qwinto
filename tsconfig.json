@@ -20,5 +20,14 @@
     },
     "types": ["node", "vite/client", "vitest", "vitest/browser"]
   },
-  "include": ["src/**/*.ts", "src/**/*.js", "src/**/*.svelte", "tests/**/*.ts", "vite.config.ts"]
+  "include": [
+    ".storybook/**/*.ts",
+    "src/**/*.ts",
+    "src/**/*.js",
+    "src/**/*.svelte",
+    "stories/**/*.ts",
+    "stories/**/*.svelte",
+    "tests/**/*.ts",
+    "vite.config.ts"
+  ]
 }

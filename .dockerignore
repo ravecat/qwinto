@@ -5,4 +5,7 @@
 .env.*
 dist
 node_modules
+**/__screenshots__
+.vitest
+.vitest-attachments
 envs/.env

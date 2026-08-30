@@ -10,6 +10,9 @@ setup:
 start host="127.0.0.1":
     {{ runner }} exec vite --host "{{host}}"
 
+storybook *args:
+    {{ runner }} exec storybook dev --port 6006 --ci {{ args }}
+
 [arg("host", long)]
 serve host="127.0.0.1":
     just setup
@@ -24,8 +27,8 @@ down:
 build:
     {{ runner }} exec vite build
 
-test:
-    {{ runner }} exec vitest run --project browser --passWithNoTests --reporter=verbose
+test *args:
+    {{ runner }} exec vitest run --passWithNoTests --reporter=verbose {{ args }}
 
 check:
     {{ runner }} exec oxfmt --check .

@@ -1,5 +1,6 @@
 import js from "@eslint/js";
 import { defineConfig } from "eslint/config";
+import storybook from "eslint-plugin-storybook";
 import svelte from "eslint-plugin-svelte";
 import globals from "globals";
 import ts from "typescript-eslint";
@@ -12,6 +13,8 @@ export default defineConfig(
       "coverage/**",
       "dist/**",
       "node_modules/**",
+      "storybook-static/**",
+      ".worktrees/**",
       ".svelte-kit/**",
       ".vite/**",
       ".vitest/**",
@@ -21,6 +24,7 @@ export default defineConfig(
   js.configs.recommended,
   ts.configs.recommended,
   svelte.configs.recommended,
+  ...storybook.configs["flat/recommended"],
   {
     languageOptions: {
       globals: {

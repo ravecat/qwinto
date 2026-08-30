@@ -28,7 +28,6 @@ storybook-static/
 *.tsbuildinfo
 
 # Test artifacts
-**/__screenshots__/
 .vitest-attachments/
 
 # Logs
