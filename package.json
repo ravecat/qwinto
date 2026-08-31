@@ -13,7 +13,7 @@
     "test:watch": "vitest --project browser --passWithNoTests --watch"
   },
   "dependencies": {
-    "@rvct/d20sdk": "1.1.1",
+    "@rvct/d20sdk": "1.2.0",
     "phoenix": "^1.8.7"
   },
   "devDependencies": {
