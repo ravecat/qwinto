@@ -6,6 +6,7 @@ type SessionState = Parameters<Parameters<typeof runtimeSession.subscribe>[0]>[0
 
 export function createSessionMock() {
   const actions = {
+    start: vi.fn(),
     roll: vi.fn(),
     reroll: vi.fn(),
     write: vi.fn(),
@@ -17,6 +18,7 @@ export function createSessionMock() {
     status: "loading",
     error: null,
     processing: {
+      start: false,
       roll: false,
       reroll: false,
       write: false,
@@ -24,6 +26,7 @@ export function createSessionMock() {
       penalize: false,
     },
     errors: {
+      start: null,
       roll: null,
       reroll: null,
       write: null,
@@ -31,6 +34,7 @@ export function createSessionMock() {
       penalize: null,
     },
     timeouts: {
+      start: false,
       roll: false,
       reroll: false,
       write: false,
@@ -44,6 +48,7 @@ export function createSessionMock() {
     actions,
     session: {
       subscribe: state.subscribe,
+      start: actions.start,
       roll: actions.roll,
       reroll: actions.reroll,
       write: actions.write,
@@ -53,6 +58,7 @@ export function createSessionMock() {
     set: state.set,
     reset() {
       state.set(initialState);
+      actions.start.mockReset();
       actions.roll.mockReset();
       actions.reroll.mockReset();
       actions.write.mockReset();

@@ -3,9 +3,10 @@
   import Board from "~components/board.svelte";
   import Dice from "~components/dice.svelte";
   import Participants from "~components/participants.svelte";
+  import Results from "~components/results.svelte";
 </script>
 
-<main class="game">
+<main class="game" aria-label="Qwinto">
   <div class="play-surface">
     <Participants />
 
@@ -16,6 +17,8 @@
     <Dice />
     <Actions />
   </div>
+
+  <Results />
 </main>
 
 <style>

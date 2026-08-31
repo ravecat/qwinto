@@ -57,7 +57,9 @@
         {/if}
 
         {#if member.status === "pending"}
-          <span class="participant-status-label participant-status-label--waiting">TURN</span>
+          <span class="participant-status-label participant-status-label--waiting">
+            {member.active ? "TURN" : "READY"}
+          </span>
         {:else if member.status === "wrote" || member.status === "skipped"}
           <span class="participant-status-label">READY</span>
         {/if}

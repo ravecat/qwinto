@@ -97,6 +97,28 @@ describe("Game", () => {
     visiblePlayerId.value = null;
   });
 
+  describe("ready phase", () => {
+    test("lets the session owner start the game", async () => {
+      sessionMock.set(
+        sessionState
+          .transient({
+            game: { phase: "ready" },
+            permissions: { can_start_game: true },
+            session: { phase: "waiting_for_players" },
+          })
+          .build(),
+      );
+
+      const screen = await render(App);
+      const startButton = screen.getByRole("button", { name: "Start game" });
+
+      await expect.element(startButton).toBeEnabled();
+      await startButton.click();
+
+      expect(sessionMock.actions.start).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe("roll phase", () => {
     test("renders active participant from the cursor", async () => {
       sessionMock.set(sessionState.transient({ game: { phase: "roll", cursor: 1 } }).build());
@@ -195,6 +217,27 @@ describe("Game", () => {
       expect(aliceLabel?.classList.contains("participant-status-label--waiting")).toBe(true);
       expect(bobLabel?.textContent).toBe("READY");
       expect(bobLabel?.classList.contains("participant-status-label--waiting")).toBe(false);
+    });
+
+    test("labels passive pending players as ready", async () => {
+      sessionMock.set(
+        sessionState
+          .transient({
+            game: {
+              phase: "result",
+              players: {
+                alice: player.build({ status: "pending" }),
+                bob: player.build({ status: "pending" }),
+              },
+            },
+          })
+          .build(),
+      );
+
+      const screen = await render(App);
+
+      await expect.element(screen.getByText("TURN", { exact: true })).toBeVisible();
+      await expect.element(screen.getByText("READY", { exact: true })).toBeVisible();
     });
 
     test("marks the opened session player with a star instead of the active player", async () => {
@@ -663,6 +706,7 @@ describe("Game", () => {
           })
           .build({
             processing: {
+              start: false,
               roll: false,
               reroll: false,
               write: true,
@@ -702,6 +746,7 @@ describe("Game", () => {
           .build({
             status: "stale",
             errors: {
+              start: null,
               roll: null,
               reroll: { reason: "rejected" },
               write: null,
@@ -787,6 +832,7 @@ describe("Game", () => {
           })
           .build({
             errors: {
+              start: null,
               roll: { reason: "" },
               reroll: null,
               write: { reason: "rejected" },
@@ -794,6 +840,7 @@ describe("Game", () => {
               penalize: null,
             },
             timeouts: {
+              start: false,
               roll: false,
               reroll: false,
               write: true,
@@ -823,6 +870,7 @@ describe("Game", () => {
           })
           .build({
             timeouts: {
+              start: false,
               roll: false,
               reroll: true,
               write: true,
@@ -1089,6 +1137,56 @@ describe("Game", () => {
       const screen = await render(App);
 
       await expect.element(screen.getByRole("button", { name: "Pass result" })).toBeEnabled();
+    });
+  });
+
+  describe("finished phase", () => {
+    test("shows ranked final scores and lets players reopen the results", async () => {
+      sessionMock.set(
+        sessionState
+          .transient({
+            game: {
+              phase: "finished",
+              scores: {
+                bob: {
+                  player_id: "bob",
+                  rows: { orange: 3, yellow: 3, purple: 3 },
+                  bonuses: 16,
+                  penalties: -20,
+                  total: 5,
+                },
+                alice: {
+                  player_id: "alice",
+                  rows: { orange: 9, yellow: 8, purple: 8 },
+                  bonuses: 21,
+                  penalties: -5,
+                  total: 41,
+                },
+              },
+            },
+            session: { phase: "finished" },
+          })
+          .build(),
+      );
+
+      const screen = await render(App);
+      const dialog = screen.getByRole("dialog", { name: "Game complete" });
+      const rows = dialog.getByRole("list", { name: "Final scores" }).getByRole("listitem");
+
+      await expect.element(dialog).toBeVisible();
+      expect(rows.all()).toHaveLength(2);
+      await expect.element(rows.nth(0)).toHaveTextContent(/Alice\s*\(you\)\s*Winner\s*41 points/);
+      await expect.element(rows.nth(1)).toHaveTextContent(/Bob\s*5 points/);
+      await expect
+        .element(dialog.getByLabelText("Alice score breakdown"))
+        .toHaveTextContent(/Orange\s*9\s*Yellow\s*8\s*Purple\s*8\s*Bonuses\s*21\s*Penalties\s*-5/);
+
+      await dialog.getByRole("button", { name: "Hide results" }).click();
+
+      const showResults = screen.getByRole("button", { name: "Results" });
+      await expect.element(showResults).toBeVisible();
+      await showResults.click();
+      await expect.element(screen.getByRole("dialog", { name: "Game complete" })).toBeVisible();
     });
   });
 });

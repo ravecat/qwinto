@@ -19,6 +19,10 @@ const runtime = shell<Session>(
 export const connection = runtime.connection;
 
 export const session = runtime.session.extend(({ call }) => ({
+  start() {
+    return call<EmptyOk, ActionError>("start", {});
+  },
+
   roll(payload: { colors: DieColor[] }) {
     return call<EmptyOk, ActionError>("roll", payload);
   },

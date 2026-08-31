@@ -4,13 +4,20 @@
   import { session } from "~store/session.svelte";
 
   const game = $derived($session.value?.game ?? null);
+  const canStart = $derived($permissions.can_start_game);
   const canWrite = $derived($permissions.can_write);
   const canRoll = $derived($permissions.can_roll);
   const canProcessRoll = $derived(canRoll && !$session.processing.roll);
   const canReroll = $derived($permissions.can_reroll);
   const canPenalize = $derived($permissions.can_penalize);
   const canPass = $derived($permissions.can_pass);
-  const hasAvailableActions = $derived(canRoll || canReroll || canPenalize || canPass || canWrite);
+  const hasAvailableActions = $derived(
+    canStart || canRoll || canReroll || canPenalize || canPass || canWrite,
+  );
+
+  function start() {
+    session.start();
+  }
 
   function roll() {
     session.roll({ colors: dice.value });
@@ -35,6 +42,18 @@
 
 {#if hasAvailableActions}
   <div class="action-bar" aria-label="Actions">
+    {#if canStart}
+      <button
+        class="action-button action-button--start"
+        type="button"
+        aria-label="Start game"
+        disabled={$session.processing.start}
+        onclick={start}
+      >
+        Start game
+      </button>
+    {/if}
+
     {#if canRoll}
       <button
         class="action-button action-button--roll"
@@ -145,6 +164,7 @@
     --action-button-hover-bg: #c85818;
   }
 
+  .action-button--start,
   .action-button--roll,
   .action-button--confirm {
     --action-button-bg: var(--game-purple);

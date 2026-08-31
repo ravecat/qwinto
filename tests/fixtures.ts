@@ -70,6 +70,7 @@ export const sessionState = Factory.define<SessionState, SessionOverrides>(
     status: "ready",
     error: null,
     processing: {
+      start: false,
       roll: false,
       reroll: false,
       write: false,
@@ -77,6 +78,7 @@ export const sessionState = Factory.define<SessionState, SessionOverrides>(
       penalize: false,
     },
     errors: {
+      start: null,
       roll: null,
       reroll: null,
       write: null,
@@ -84,6 +86,7 @@ export const sessionState = Factory.define<SessionState, SessionOverrides>(
       penalize: null,
     },
     timeouts: {
+      start: false,
       roll: false,
       reroll: false,
       write: false,
