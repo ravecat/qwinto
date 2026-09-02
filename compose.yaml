@@ -5,7 +5,7 @@ services:
       context: .
       target: development
     working_dir: /app
-    command: ["nix", "develop", "--command", "just", "serve", "--host", "0.0.0.0"]
+    command: ["nix", "develop", "--command", "just", "serve"]
     environment:
       CI: "true"
       npm_config_confirm_modules_purge: "false"

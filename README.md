@@ -78,8 +78,9 @@ Then start this module repository:
 just up
 ```
 
-Open [http://localhost:5000](http://localhost:5000). D20 derives iframe URLs from the
-module slug and the shell request host. A module with slug `<module-slug>` resolves to
+Open [http://localhost:5000](http://localhost:5000). Storybook is available at
+[http://localhost:6006](http://localhost:6006). D20 derives iframe URLs from the module
+slug and the shell request host. A module with slug `<module-slug>` resolves to
 `http://<module-slug>.localhost` when the shell is opened at `localhost:5000`.
 
 For a module repository, the local Compose contract is:
@@ -106,18 +107,18 @@ the template.
 
 ## Commands
 
-| Command          | Purpose                                           |
-| ---------------- | ------------------------------------------------- |
-| `just up`        | Start this module's Vite service through Compose. |
-| `just down`      | Stop the Compose service.                         |
-| `just setup`     | Install project dependencies.                     |
-| `just start`     | Start the Vite development server.                |
-| `just serve`     | Install dependencies and start the Vite server.   |
-| `just build`     | Build the app for production.                     |
-| `just check`     | Run formatting checks, linting, and type checks.  |
-| `just format`    | Format source files.                              |
-| `just typecheck` | Run Svelte and TypeScript checks.                 |
-| `just preview`   | Preview the production build.                     |
+| Command          | Purpose                                          |
+| ---------------- | ------------------------------------------------ |
+| `just up`        | Start the Compose Vite service and Storybook.    |
+| `just down`      | Stop the Compose service.                        |
+| `just setup`     | Install project dependencies.                    |
+| `just start`     | Start the Vite development server.               |
+| `just storybook` | Start Storybook on port 6006.                    |
+| `just serve`     | Install dependencies and start the Vite server.  |
+| `just build`     | Build the app for production.                    |
+| `just check`     | Run formatting checks, linting, and type checks. |
+| `just format`    | Format source files.                             |
+| `just preview`   | Preview the production build.                    |
 
 ## Testing and Checks
 

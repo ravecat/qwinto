@@ -26,6 +26,7 @@
         {
           default = pkgs.mkShellNoCC {
             buildInputs = with pkgs; [
+              concurrently
               docker-client
               docker-compose
               git

@@ -1,47 +1,46 @@
-runner := "pnpm"
-
 default:
     @just --list
 
 setup:
-    {{ runner }} install
+    pnpm install
 
-[arg("host", long)]
-start host="127.0.0.1":
-    {{ runner }} exec vite --host "{{host}}"
+[arg("host", long="host")]
+start host="0.0.0.0":
+    pnpm exec vite --host "{{ host }}"
 
 storybook *args:
-    {{ runner }} exec storybook dev --port 6006 --ci {{ args }}
+    pnpm exec storybook dev --port 6006 --ci {{ args }}
 
-[arg("host", long)]
-serve host="127.0.0.1":
-    just setup
-    just start --host "{{host}}"
+serve: setup
+    just start
 
-up:
-    docker compose up --build
+up: setup
+    docker compose up -d
+    concurrently \
+        --kill-others-on-fail \
+        --names vite,storybook \
+        --prefix-colors cyan,magenta \
+        "docker compose logs --follow" \
+        "just storybook"
 
 down:
     docker compose down
 
 build:
-    {{ runner }} exec vite build
+    pnpm exec vite build
 
 test *args:
-    {{ runner }} exec vitest run --passWithNoTests --reporter=verbose {{ args }}
-
-check:
-    {{ runner }} exec oxfmt --check .
-    {{ runner }} exec eslint .
-    just typecheck
+    pnpm exec vitest run --passWithNoTests --reporter=verbose {{ args }}
 
 format:
-    {{ runner }} exec eslint . --fix
-    {{ runner }} exec oxfmt .
+    pnpm exec eslint . --fix
+    pnpm exec oxfmt .
 
-typecheck:
-    {{ runner }} exec svelte-check --tsconfig ./tsconfig.json
-    {{ runner }} exec tsc -p tsconfig.test.json --noEmit
+check:
+    pnpm exec oxfmt --check .
+    pnpm exec eslint .
+    pnpm exec svelte-check --tsconfig ./tsconfig.json
+    pnpm exec tsc -p tsconfig.test.json --noEmit
 
 preview:
-    {{ runner }} exec vite preview
+    pnpm exec vite preview
