@@ -18,7 +18,7 @@ env:
 jobs:
   checks:
     name: Check and build project
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         shell: nix develop --command bash --noprofile --norc -eo pipefail {0}

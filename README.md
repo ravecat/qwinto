@@ -128,7 +128,7 @@ just test
 just build
 ```
 
-Visual references use Playwright 1.59.1 Chromium on the GitHub Actions Ubuntu runner.
+Visual references use Playwright 1.59.1 Chromium on the GitHub Actions Ubuntu 24.04 runner.
 When visual CI fails, its `ci-visual-references` artifact contains renderer-matched
 baselines. Review image differences before committing them; local and generic Ubuntu
 containers use different system fonts.
