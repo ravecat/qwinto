@@ -124,11 +124,14 @@ the template.
 
 ```sh
 just check
+just test
 just build
 ```
 
-There are no gameplay tests yet. `just check` currently validates formatting, linting,
-Svelte, and TypeScript.
+Visual references are generated with Playwright 1.59.1 Chromium on Ubuntu 24.04
+(`mcr.microsoft.com/playwright:v1.59.1-noble`). Regenerate them with `just test -u`
+in that environment and review the image diffs before committing; host font rendering
+can differ.
 
 ## License
 
