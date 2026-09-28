@@ -128,10 +128,10 @@ just test
 just build
 ```
 
-Visual references are generated with Playwright 1.59.1 Chromium on Ubuntu 24.04
-(`mcr.microsoft.com/playwright:v1.59.1-noble`). Regenerate them with `just test -u`
-in that environment and review the image diffs before committing; host font rendering
-can differ.
+Visual references use Playwright 1.59.1 Chromium on the GitHub Actions Ubuntu runner.
+When visual CI fails, its `ci-visual-references` artifact contains renderer-matched
+baselines. Review image differences before committing them; local and generic Ubuntu
+containers use different system fonts.
 
 ## License
 

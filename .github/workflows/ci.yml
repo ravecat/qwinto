@@ -53,6 +53,19 @@ jobs:
         id: vitest-tests
         run: just test --reporter=html
 
+      - name: Capture CI visual references
+        if: failure() && steps.vitest-tests.outcome == 'failure'
+        run: just test --project desktop --project tablet --project mobile --update
+
+      - name: Upload CI visual references
+        if: failure() && steps.vitest-tests.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-visual-references
+          path: __screenshots__/
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Upload Vitest failure report
         if: failure() && steps.vitest-tests.outcome == 'failure'
         uses: actions/upload-artifact@v4
