@@ -46,9 +46,6 @@ jobs:
       - name: Build project
         run: just build
 
-      - name: Install Playwright Chromium
-        run: pnpm exec playwright install --with-deps chromium
-
       - name: Run Vitest browser, Storybook, and visual tests
         id: vitest-tests
         run: just test --reporter=html

@@ -2,7 +2,7 @@
   description = "The Qwinto tabletop game";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
   };
 
   outputs =
@@ -22,9 +22,31 @@
         system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
+          fontsConf = pkgs.writeText "playwright-fonts.conf" ''
+            <?xml version="1.0"?>
+            <!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">
+            <fontconfig>
+              <dir>${pkgs.dejavu_fonts}/share/fonts/truetype</dir>
+              <cachedir prefix="xdg">fontconfig</cachedir>
+            </fontconfig>
+          '';
+          playwright = (pkgs.callPackage "${nixpkgs}/pkgs/development/web/playwright/driver.nix" {
+            makeFontsConf = _: fontsConf;
+          }).playwright-core;
+          browsers =
+            assert pkgs.lib.assertMsg
+              (playwright.version == (builtins.fromJSON (builtins.readFile ./package.json)).devDependencies.playwright)
+              "The Nix browser package must match the Playwright version in package.json.";
+            playwright.selectBrowsers {
+              withFirefox = false;
+              withWebkit = false;
+              withFfmpeg = false;
+            };
         in
         {
           default = pkgs.mkShellNoCC {
+            PLAYWRIGHT_BROWSERS_PATH = "${browsers}";
+            FONTCONFIG_FILE = "${fontsConf}";
             buildInputs = with pkgs; [
               concurrently
               docker-client

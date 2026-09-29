@@ -40,6 +40,7 @@ export default defineConfig({
       html: path.join(root, ".vitest/report/index.html"),
     },
     browser: {
+      api: { port: 0, strictPort: false },
       enabled: true,
       headless: true,
       provider: playwright({
