@@ -15,7 +15,7 @@ serve: setup
     just start
 
 up: setup
-    docker compose up -d
+    docker compose up -d --force-recreate
     concurrently \
         --kill-others-on-fail \
         --names vite,storybook \
