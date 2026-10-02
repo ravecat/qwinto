@@ -79,7 +79,7 @@ just test --project desktop
 just test
 ```
 
-New stories fail until references are reviewed. For an intentional visual change, run `just test --project desktop --project tablet --project mobile --update`, inspect every changed PNG in `__screenshots__/`, then rerun `just test` without `--update`. On CI failure, the `ci-visual-references` artifact contains images captured with the same Nix browser and fonts for review; normal runs never replace committed references.
+New stories fail until references are reviewed. For an intentional visual change, run `just test --project desktop --project tablet --project mobile --update`, inspect every changed PNG in `__screenshots__/`, then rerun `just test` without `--update`. CI compares with `--update=none` and does not rerun failures to generate references. Its `visual-failure-evidence` artifact includes only `.vitest-attachments/**/*.png` for seven days. Automatic failure screenshots use `.vitest-attachments/failures/<project>/chromium/`; comparison failures retain story, project, and browser paths under `.vitest-attachments/`. Normal runs never replace committed references.
 
 ## License
 
@@ -89,4 +89,6 @@ No license has been declared yet.
 
 The application root and Storybook preview load Source Code Pro at normal weights 400 and 700 through matching anonymous-CORS Google Fonts links with `display=swap`. Production retains a visible fallback. Google font responses are not lockfile-pinned.
 
-Visual tests require network access to Google Fonts. They verify loaded Latin, Cyrillic, and required symbol faces before interactions and again before capture. Missing required fonts fail the test instead of accepting host fallback text.
+Visual setup only resets the pointer before each story and compares the complete document after play with a 15-second timeout. Playwright waits for font readiness during capture; setup does not force font loads or assert remote font availability. The pinned flake supplies local fallback fonts. Visual projects use two workers, file parallelism, and maxConcurrency 1. Native pixelmatch permits a mismatched-pixel ratio of 0.001 (0.1%) without an absolute pixel cap. Tracing is disabled in all browser projects.
+
+The locked Nix Chromium wrapper and shell use only Source Code Pro as their fallback font directory and set the C.UTF-8 locale. Pointer state is reset before each Storybook scenario. Run reference updates and comparisons in `nix develop`; a separate browser installation is unnecessary there. Google Fonts links remain active; screenshot comparisons determine whether any fallback rendering is acceptable.

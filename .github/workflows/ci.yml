@@ -48,30 +48,15 @@ jobs:
 
       - name: Run Vitest browser, Storybook, and visual tests
         id: vitest-tests
-        run: just test --reporter=html
+        run: just test --reporter=html --update=none
 
-      - name: Capture CI visual references
-        if: failure() && steps.vitest-tests.outcome == 'failure'
-        run: just test --project desktop --project tablet --project mobile --update
-
-      - name: Upload CI visual references
+      - name: Upload visual failure evidence
         if: failure() && steps.vitest-tests.outcome == 'failure'
         uses: actions/upload-artifact@v4
         with:
-          name: ci-visual-references
-          path: __screenshots__/
-          if-no-files-found: error
-          retention-days: 7
-
-      - name: Upload Vitest failure report
-        if: failure() && steps.vitest-tests.outcome == 'failure'
-        uses: actions/upload-artifact@v4
-        with:
-          name: vitest-report
-          path: |
-            .vitest/
-            .vitest-attachments/
-          if-no-files-found: error
+          name: visual-failure-evidence
+          path: .vitest-attachments/**/*.png
+          if-no-files-found: ignore
           include-hidden-files: true
           retention-days: 7
 

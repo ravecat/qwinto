@@ -26,7 +26,7 @@
             <?xml version="1.0"?>
             <!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">
             <fontconfig>
-              <dir>${pkgs.dejavu_fonts}/share/fonts/truetype</dir>
+              <dir>${pkgs.source-code-pro}/share/fonts/opentype</dir>
               <cachedir prefix="xdg">fontconfig</cachedir>
             </fontconfig>
           '';
@@ -47,6 +47,9 @@
           default = pkgs.mkShellNoCC {
             PLAYWRIGHT_BROWSERS_PATH = "${browsers}";
             FONTCONFIG_FILE = "${fontsConf}";
+            LANG = "C.UTF-8";
+            LANGUAGE = "C";
+            LC_ALL = "C.UTF-8";
             buildInputs = with pkgs; [
               concurrently
               docker-client

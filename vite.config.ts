@@ -43,6 +43,7 @@ export default defineConfig({
       api: { port: 0, strictPort: false },
       enabled: true,
       headless: true,
+      trace: "off",
       provider: playwright({
         contextOptions: {
           viewport: { width: 1280, height: 900 },
@@ -51,19 +52,39 @@ export default defineConfig({
       }),
       expect: {
         toMatchScreenshot: {
+          comparatorName: "pixelmatch",
+          comparatorOptions: { allowedMismatchedPixelRatio: 0.001 },
+          resolveDiffPath: ({
+            arg,
+            attachmentsDir,
+            browserName,
+            ext,
+            project,
+            root: projectRoot,
+            testFileDirectory,
+            testFileName,
+          }) =>
+            path.join(
+              projectRoot,
+              attachmentsDir,
+              testFileDirectory,
+              testFileName,
+              project.name,
+              browserName,
+              `${arg}${ext}`,
+            ),
           resolveScreenshotPath: ({
             arg,
             browserName,
             ext,
             project,
             root: projectRoot,
-            screenshotDirectory,
             testFileDirectory,
             testFileName,
           }) =>
             path.join(
               projectRoot,
-              screenshotDirectory,
+              "__screenshots__",
               testFileDirectory,
               testFileName,
               project.name,
@@ -85,7 +106,15 @@ export default defineConfig({
           sequence: { groupOrder: 0 },
           setupFiles: ["vitest-browser-svelte"],
           browser: {
-            instances: [{ browser: "chromium" }],
+            instances: [
+              {
+                browser: "chromium",
+                screenshotDirectory: path.join(
+                  root,
+                  ".vitest-attachments/failures/browser/chromium",
+                ),
+              },
+            ],
           },
         },
       },
@@ -101,16 +130,23 @@ export default defineConfig({
           }),
         ],
         test: {
-          fileParallelism: false,
+          fileParallelism: true,
+          maxWorkers: 2,
+          maxConcurrency: 1,
           sequence: { groupOrder: 1 },
           setupFiles: [path.join(root, ".storybook/vitest.setup.ts")],
           browser: {
             provider: storybookBrowserProvider(),
-            instances: [{ browser: "chromium", name: "desktop" }],
-            trace: {
-              mode: "retain-on-failure",
-              tracesDir: path.join(root, ".vitest/traces/desktop"),
-            },
+            instances: [
+              {
+                browser: "chromium",
+                name: "desktop",
+                screenshotDirectory: path.join(
+                  root,
+                  ".vitest-attachments/failures/desktop/chromium",
+                ),
+              },
+            ],
           },
         },
       },
@@ -126,16 +162,23 @@ export default defineConfig({
           }),
         ],
         test: {
-          fileParallelism: false,
+          fileParallelism: true,
+          maxWorkers: 2,
+          maxConcurrency: 1,
           sequence: { groupOrder: 2 },
           setupFiles: [path.join(root, ".storybook/vitest.setup.ts")],
           browser: {
             provider: storybookBrowserProvider(),
-            instances: [{ browser: "chromium", name: "tablet" }],
-            trace: {
-              mode: "retain-on-failure",
-              tracesDir: path.join(root, ".vitest/traces/tablet"),
-            },
+            instances: [
+              {
+                browser: "chromium",
+                name: "tablet",
+                screenshotDirectory: path.join(
+                  root,
+                  ".vitest-attachments/failures/tablet/chromium",
+                ),
+              },
+            ],
           },
         },
       },
@@ -151,16 +194,23 @@ export default defineConfig({
           }),
         ],
         test: {
-          fileParallelism: false,
+          fileParallelism: true,
+          maxWorkers: 2,
+          maxConcurrency: 1,
           sequence: { groupOrder: 3 },
           setupFiles: [path.join(root, ".storybook/vitest.setup.ts")],
           browser: {
             provider: storybookBrowserProvider(),
-            instances: [{ browser: "chromium", name: "mobile" }],
-            trace: {
-              mode: "retain-on-failure",
-              tracesDir: path.join(root, ".vitest/traces/mobile"),
-            },
+            instances: [
+              {
+                browser: "chromium",
+                name: "mobile",
+                screenshotDirectory: path.join(
+                  root,
+                  ".vitest-attachments/failures/mobile/chromium",
+                ),
+              },
+            ],
           },
         },
       },
