@@ -178,7 +178,7 @@
   .game-results__eyebrow {
     color: #5f636b;
     font-size: 0.72rem;
-    font-weight: 800;
+    font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
   }
@@ -253,19 +253,19 @@
     border-radius: 50%;
     background: #333840;
     color: #ffffff;
-    font-weight: 800;
+    font-weight: 700;
   }
 
   .game-results__name {
     min-width: 0;
     overflow-wrap: anywhere;
-    font-weight: 800;
+    font-weight: 700;
   }
 
   .game-results__self {
     color: #5f636b;
     font-size: 0.75rem;
-    font-weight: 500;
+    font-weight: 400;
   }
 
   .game-results__winner {
@@ -328,7 +328,7 @@
     margin: 0;
     font-size: 0.9rem;
     font-variant-numeric: tabular-nums;
-    font-weight: 800;
+    font-weight: 700;
   }
 
   .game-results__unavailable {
@@ -360,7 +360,7 @@
     color: #171717;
     cursor: pointer;
     font: inherit;
-    font-weight: 800;
+    font-weight: 700;
   }
 
   @media (max-width: 640px) {

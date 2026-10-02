@@ -185,7 +185,7 @@
     background: rgb(255 255 255 / 0.94);
     color: #111827;
     font-size: clamp(0.52rem, 1.35vmin, 0.72rem);
-    font-weight: 800;
+    font-weight: 700;
     line-height: 1;
     pointer-events: none;
     white-space: nowrap;

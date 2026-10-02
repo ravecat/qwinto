@@ -84,3 +84,9 @@ New stories fail until references are reviewed. For an intentional visual change
 ## License
 
 No license has been declared yet.
+
+## Fonts and visual references
+
+The application root and Storybook preview load Source Code Pro at normal weights 400 and 700 through matching anonymous-CORS Google Fonts links with `display=swap`. Production retains a visible fallback. Google font responses are not lockfile-pinned.
+
+Visual tests require network access to Google Fonts. They verify loaded Latin, Cyrillic, and required symbol faces before interactions and again before capture. Missing required fonts fail the test instead of accepting host fallback text.

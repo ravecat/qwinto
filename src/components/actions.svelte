@@ -146,7 +146,7 @@
     cursor: pointer;
     font: inherit;
     font-size: clamp(1.08rem, 2.4vmin, 1.35rem);
-    font-weight: 800;
+    font-weight: 700;
     line-height: 1;
     overflow-wrap: anywhere;
   }
